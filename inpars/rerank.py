@@ -35,10 +35,11 @@ prediction_tokens = {
 
 
 class Reranker:
-    def __init__(self, silent=False, batch_size=8, fp16=False, torchscript=False, device=None):
+    def __init__(self, silent=False, batch_size=8, fp16=False, bf16=False, torchscript=False, device=None):
         self.silent = silent
         self.batch_size = batch_size
         self.fp16 = fp16
+        self.bf16 = bf16
         self.torchscript = torchscript
         self.device = device
 
@@ -57,6 +58,8 @@ class MonoT5Reranker(Reranker):
         model_args = {}
         if self.fp16:
             model_args["torch_dtype"] = torch.float16
+        elif self.bf16:
+            model_args["torch_dtype"] = torch.bfloat16
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name_or_path, **model_args)
         self.model = torch.compile(self.model)
         self.model.to(self.device)
@@ -131,6 +134,8 @@ if __name__ == "__main__":
                         help="CPU or CUDA device.")
     parser.add_argument("--fp16", action="store_true",
                         help="Whether to use FP16 weights during inference.")
+    parser.add_argument("--bf16", action="store_true",
+                        help="Whether to use BF16 weights during inference.")
     parser.add_argument("--batch_size", default=16, type=int,
                         help="Batch size for inference.")
     parser.add_argument("--top_k", default=1_000, type=int,
@@ -156,6 +161,7 @@ if __name__ == "__main__":
         model_name_or_path=args.model,
         batch_size=args.batch_size,
         fp16=args.fp16,
+        bf16=args.bf16,
         device=args.device,
         # torchscript=args.torchscript,
     )
