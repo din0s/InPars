@@ -20,7 +20,9 @@ fi
 # <<< conda initialize <<<
 
 mamba activate thesis
+STORAGE=/mnt/disks/storage
 
 python -u -m inpars.evaluate \
     --dataset arguana \
-    --run arguana-run.txt 
+    --run $STORAGE/runs/arguana.txt
+

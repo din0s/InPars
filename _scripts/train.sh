@@ -20,11 +20,12 @@ fi
 # <<< conda initialize <<<
 
 mamba activate thesis
+STORAGE=/mnt/disks/storage
 
 python -u -m inpars.train \
-    --triples arguana-triples.tsv \
+    --triples $STORAGE/triples/arguana.tsv \
     --base_model castorini/monot5-3b-msmarco-10k \
-    --output_dir ./model-arguana/ \
+    --output_dir $STORAGE/models/arguana/ \
     --per_device_train_batch_size 2 \
     --gradient_accumulation_steps 64 \
     --learning_rate 3e-6 \

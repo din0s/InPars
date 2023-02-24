@@ -20,9 +20,10 @@ fi
 # <<< conda initialize <<<
 
 mamba activate thesis
+STORAGE=/mnt/disks/storage
 
 python -u -m inpars.tokens \
-    --triples arguana-triples.tsv \
+    --triples $STORAGE/triples/arguana.tsv \
     --per_device_train_batch_size 2 \
     --gradient_accumulation_steps 64 \
     --max_steps 156

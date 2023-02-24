@@ -20,10 +20,11 @@ fi
 # <<< conda initialize <<<
 
 mamba activate thesis
+STORAGE=/mnt/disks/storage
 
 python -u -m inpars.rerank \
-    --model ./model-arguana/ \
+    --model $STORAGE/models/arguana/ \
     --dataset arguana \
-    --output_run arguana-run.txt \
+    --output_run $STORAGE/runs/arguana.txt \
     --batch_size 128 \
     --bf16
