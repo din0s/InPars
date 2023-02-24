@@ -3,6 +3,7 @@ import csv
 import torch
 import argparse
 import pandas as pd
+from collections import OrderedDict
 from math import ceil, exp
 from typing import List
 from tqdm.auto import tqdm
@@ -113,6 +114,14 @@ class MonoT5Reranker(Reranker):
             scores += batch_scores[:, 1].exp().tolist()
         return scores
 
+def split_dict_into_chunks(input_dict, num_chunks, keep_idx):
+    chunk_size = len(input_dict) // num_chunks
+    input_list = list(OrderedDict(input_dict.items())
+
+    start = chunk_size * keep_idx
+    end = start + chunk_size if keep_idx < num_chunks - 1 else None
+    return dict(input_list[start:end])
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -140,6 +149,10 @@ if __name__ == "__main__":
                         help="Batch size for inference.")
     parser.add_argument("--top_k", default=1_000, type=int,
                         help="Top-k documents to be reranked for each query.")
+    parser.add_argument("--chunk_queries", default=1, type=int,
+                        help="Split the queries into n chunks (for parallel scoring).")
+    parser.add_argument("--chunk_idx", default=0, type=int,
+                        help="The chunk index of the queries to rerank in this process.")
     args = parser.parse_args()
 
     if args.dataset:
@@ -149,7 +162,10 @@ if __name__ == "__main__":
         corpus = pd.read_csv(args.corpus)
         queries = pd.read_csv(args.queries)
         queries = dict(zip(queries['query_id'], queries['text']))
-    
+
+    if args.chunk_queries > 1:
+        queries = split_dict_into_chunks(queries, args.chunk_queries, args.chunk_idx)
+
     # Convert to {'doc_id': 'text'} format
     corpus = dict(zip(corpus['doc_id'], corpus['text']))
 
