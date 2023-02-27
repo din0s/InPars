@@ -174,4 +174,7 @@ poetry.toml
 
 *-triples.tsv
 wandb/
+models/
+runs/
+slurm_*.out
 
