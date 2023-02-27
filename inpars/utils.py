@@ -61,6 +61,9 @@ class TRECRun:
             .apply(lambda x: x-10000)
         )
 
+        # Only keep rows in the current query chunk
+        self.df = self.df[self.df["qid"].isin(queries)]
+
         # Reranks only the top-k documents for each query
         subset = (
             self.df[["qid", "docid"]]

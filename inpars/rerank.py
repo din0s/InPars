@@ -116,7 +116,9 @@ class MonoT5Reranker(Reranker):
 
 def split_dict_into_chunks(input_dict, num_chunks, keep_idx):
     chunk_size = len(input_dict) // num_chunks
-    input_list = list(OrderedDict(input_dict.items())
+    sorted_input = [(k, input_dict[k]) for k in sorted(input_dict.keys())]
+    ordered_dict = OrderedDict(sorted_input)
+    input_list = list(ordered_dict.items())
 
     start = chunk_size * keep_idx
     end = start + chunk_size if keep_idx < num_chunks - 1 else None
