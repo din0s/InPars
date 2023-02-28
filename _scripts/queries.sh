@@ -28,7 +28,7 @@ python -u -m inpars.generate \
     --dataset arguana \
     --dataset_source ir_datasets \
     --base_model togethercomputer/GPT-JT-6B-v1 \
-    --output ./synthetic/arguana.jsonl \
+    --output $STORAGE/synthetic/arguana.jsonl \
     --max_new_tokens 256 \
     --max_query_length 512 \
     --max_doc_length 512 \
