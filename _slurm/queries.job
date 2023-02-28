@@ -1,0 +1,33 @@
+#!/bin/bash
+
+#SBATCH --job-name=QueriesInPars
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=18
+#SBATCH --mem=120gb
+#SBATCH --time=01:00:00
+#SBATCH --output=slurm_queries_%A.out
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+source activate thesis
+
+mkdir -p $TMPDIR/hf_cache && export HF_DATASETS_CACHE=$_
+
+cd $HOME/InPars
+mkdir -p synthetic
+
+python -u \
+    -m inpars.generate \
+    --prompt inpars-gbq \
+    --dataset arguana \
+    --dataset_source ir_datasets \
+    --base_model togethercomputer/GPT-JT-6B-v1 \
+    --output ./synthetic/arguana.jsonl \
+    --max_new_tokens 256 \
+    --max_query_length 512 \
+    --max_doc_length 512 \
+    --max_generations 10000 \
+    --batch_size 8 \
+    --fp16
