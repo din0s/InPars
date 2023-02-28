@@ -1,0 +1,23 @@
+#!/bin/bash
+
+#SBATCH --job-name=EvalInPars
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --mem=120gb
+#SBATCH --time=01:00:00
+#SBATCH --output=slurm_eval_%A.out
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+module load Java/11.0.16
+source activate thesis
+
+cd $HOME/InPars
+
+python -u \
+    -m inpars.evaluate \
+    --dataset arguana \
+    --run ./runs/arguana.txt
