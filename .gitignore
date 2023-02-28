@@ -172,8 +172,8 @@ poetry.toml
 
 # End of https://www.toptal.com/developers/gitignore/api/python
 
-*-triples.tsv
 wandb/
+triples/
 models/
 runs/
 slurm_*.out
