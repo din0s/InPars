@@ -1,0 +1,34 @@
+#!/bin/bash
+
+#SBATCH --job-name=TrainInPars
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=18
+#SBATCH --mem=120gb
+#SBATCH --time=01:00:00
+#SBATCH --output=slurm_train_%A.out
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+source activate thesis
+
+mkdir -p $TMPDIR/hf_cache && export HF_DATASETS_CACHE=$_
+
+cd $HOME/InPars
+cp ./triples/arguana.tsv $TMPDIR
+
+python -u \
+    -m inpars.train \
+    --triples $TMPDIR/arguana.tsv \
+    --base_model castorini/monot5-3b-msmarco-10k \
+    --output_dir ./models/arguana/ \
+    --per_device_train_batch_size 2 \
+    --gradient_accumulation_steps 64 \
+    --learning_rate 3e-6 \
+    --weight_decay 5e-5 \
+    --warmup_steps 156 \
+    --max_steps 156 \
+    --optim adamw_bnb_8bit \
+    --bf16
+
