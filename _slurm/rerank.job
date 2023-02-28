@@ -17,6 +17,8 @@ module load Anaconda3/2022.05
 source activate thesis
 
 cd $HOME/InPars
+mkdir -p runs
+
 CHUNK_IDX=$((SLURM_ARRAY_TASK_ID - 1))
 
 python -u \

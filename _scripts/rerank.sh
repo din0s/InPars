@@ -21,6 +21,7 @@ fi
 
 mamba activate thesis
 STORAGE=/mnt/disks/storage
+mkdir -p $STORAGE/runs
 
 python -u -m inpars.rerank \
     --model $STORAGE/models/arguana/ \
