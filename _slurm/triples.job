@@ -21,6 +21,6 @@ mkdir -p triples
 python -u \
     -m inpars.generate_triples \
     --input ./synthetic/arguana.jsonl \
-    --output ./triples/arguana.jsonl \
+    --output ./triples/arguana.tsv \
     --dataset arguana
 
