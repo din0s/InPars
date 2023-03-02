@@ -33,6 +33,7 @@ class Prompt:
             prompt_class = {
                 'dynamic': DynamicPrompt,
                 'static': StaticPrompt,
+                'chat': ChatPrompt,
             }[template['mode']]
             return prompt_class(template=template['template'], *args, **kwargs)
         else:
@@ -41,7 +42,7 @@ class Prompt:
 
             with open(name) as f:
                 return StaticPrompt(template=f.read(), *args, **kwargs)
-    
+
     def _truncate_max_doc_length(self, document):
         if self.max_doc_length:
             document = self.tokenizer.decode(
@@ -100,7 +101,7 @@ class DynamicPrompt(Prompt):
                 )
 
         return prompt
-    
+
     def _truncate_max_query_length(self, query):
         if self.max_query_length:
                 query = self.tokenizer.decode(
@@ -109,3 +110,44 @@ class DynamicPrompt(Prompt):
                     ]
                 )
         return query
+
+class ChatPrompt(DynamicPrompt):
+    def build(self, document, n_examples=3):
+        random_examples = random.sample(self.examples, n_examples)
+
+        messages = [
+            {"role": "system", "content": self.template}
+        ]
+
+        for i in range(n_examples):
+            _, _, query, doc = random_examples[i]
+            query = self._truncate_max_query_length(query)
+            doc = self._truncate_max_doc_length(doc)
+
+            messages += [
+                {"role": "user", "content": query},
+                {"role": "assistant", "content": doc},
+            ]
+
+        document = ftfy.fix_text(document).rstrip()
+        if self.max_doc_length:
+            document = self.tokenizer.decode(
+                self.tokenizer(document, truncation=True, max_length=self.max_doc_length)[
+                    "input_ids"
+                ]
+            )
+
+        messages += [
+            {"role": "user", "content": document},
+        ]
+
+        if self.max_prompt_length:
+            prompt = " ".join([m["content"] for m in messages])
+            prompt_length = len(self.tokenizer.tokenize(prompt))
+            if prompt_length + self.max_new_token > self.max_prompt_length:
+                raise Exception(
+                    f"Overflowing prompt (prompt length: {prompt_length} + {self.max_new_token}, \
+                     max length: {self.max_prompt_length})"
+                )
+
+        return messages

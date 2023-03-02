@@ -1,4 +1,5 @@
 import os
+import json
 import argparse
 import pandas as pd
 from .dataset import load_corpus
@@ -29,6 +30,9 @@ if __name__ == "__main__":
     parser.add_argument('--output', type=str, required=True)
     parser.add_argument('--seed', type=int, default=1)
     parser.add_argument('--device', type=str, default=None)
+    parser.add_argument('--temperature', type=float, default=1.0)
+    parser.add_argument('--is_openai', action='store_true')
+    parser.add_argument('--yield_results', action='store_true')
     # parser.add_argument('--verbose', action='store_true')
     args = parser.parse_args()
     set_seed(args.seed)
@@ -66,6 +70,7 @@ if __name__ == "__main__":
         int8=args.int8,
         tf=args.tf,
         device=args.device,
+        is_openai=args.is_openai,
         # verbose=args.verbose,
     )
 
@@ -73,10 +78,18 @@ if __name__ == "__main__":
         documents=dataset['text'],
         doc_ids=dataset['doc_id'],
         batch_size=args.batch_size,
+        yield_results=args.yield_results,
+        temperature=args.temperature,
     )
-    dataset['query'] = [example['query'] for example in generated]
-    dataset['log_probs'] = [example['log_probs'] for example in generated]
-    dataset['prompt_text'] = [example['prompt_text'] for example in generated]
-    dataset['doc_id'] = [example['doc_id'] for example in generated]
-    dataset['fewshot_examples'] = [example['fewshot_examples'] for example in generated]
-    dataset.to_json(args.output, orient='records', lines=True)
+
+    if args.yield_results:
+        for example in generated:
+            with open(args.output, 'a') as f:
+                f.write(json.dumps(example) + '\n')
+    else:
+        dataset['query'] = [example['query'] for example in generated]
+        dataset['log_probs'] = [example['log_probs'] for example in generated]
+        dataset['prompt_text'] = [example['prompt_text'] for example in generated]
+        dataset['doc_id'] = [example['doc_id'] for example in generated]
+        dataset['fewshot_examples'] = [example['fewshot_examples'] for example in generated]
+        dataset.to_json(args.output, orient='records', lines=True)

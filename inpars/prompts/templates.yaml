@@ -91,3 +91,8 @@ promptagator-fever:
   template: |
     {document}
     Is it true that {query}
+
+# Chat templates
+chat-arguana:
+  mode: chat
+  template: Identify the main argument in the document and use it to construct a query that reflects the opposing view. Only respond with the generated query.

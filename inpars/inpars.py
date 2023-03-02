@@ -1,12 +1,12 @@
 import os
-import ftfy
 import torch
 import random
-import statistics
 import pandas as pd
 from tqdm.auto import tqdm
+from functools import partial
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from .prompt import Prompt
+
 
 def load_examples(corpus, n_fewshot_examples):
     df = pd.read_json(
@@ -40,6 +40,7 @@ class InPars:
         device=None,
         tf=False,
         verbose=False,
+        is_openai=False,
     ):
         self.corpus = corpus
         self.max_doc_length = max_doc_length
@@ -49,8 +50,13 @@ class InPars:
         self.n_fewshot_examples = n_fewshot_examples
         self.device = device
         self.verbose = verbose
+        self.is_openai = is_openai
         if device is None:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
+
+        if self.is_openai:
+            self.openai_engine = base_model
+            base_model = "gpt2"
 
         self.tokenizer = AutoTokenizer.from_pretrained(
             base_model, padding_side="left"
@@ -70,7 +76,10 @@ class InPars:
 
         self.tf = tf
 
-        if self.tf:
+        if self.is_openai:
+            import openai
+            openai.api_key = os.getenv("OPENAI_API_KEY")
+        elif self.tf:
             from transformers import TFAutoModelForCausalLM
             self.model = TFAutoModelForCausalLM.from_pretrained(
                 base_model,
@@ -103,6 +112,7 @@ class InPars:
         documents,
         doc_ids,
         batch_size=1,
+        yield_results=False,
         **generate_kwargs,
     ):
         if self.tf:
@@ -114,6 +124,40 @@ class InPars:
             for document in tqdm(documents, disable=disable_pbar, desc="Building prompts")
         ]
 
+        if self.is_openai:
+            assert batch_size == 1, "OpenAI only supports batch_size=1"
+
+            import openai
+            generate = partial(
+                openai.ChatCompletion.create,
+                model=self.openai_engine,
+                max_tokens=self.max_new_tokens,
+                **generate_kwargs,
+            )
+
+            results = [] if not yield_results else None
+            for i, prompt in enumerate(tqdm(prompts, desc="Generating queries")):
+                response = generate(messages=prompt)
+                prompt_text = " ".join(
+                    [f'[{message["role"]}] {message["content"]}' for message in prompt]
+                )
+                question = response["choices"][0]["message"]["content"]
+                result = {
+                    "query": question,
+                    "log_probs": [],  # unavailable with chat completion API
+                    "prompt_text": prompt_text,
+                    "doc_id": doc_ids.iloc[i],
+                    "doc_text": documents.iloc[i],
+                    "fewshot_examples": [example[0] for example in self.fewshot_examples],
+                }
+
+                if yield_results:
+                    yield result
+                else:
+                    results.append(result)
+
+            return results
+
         if self.tf:
             generate = tf.function(self.model.generate, jit_compile=True)
             padding_kwargs = {"pad_to_multiple_of": 8}
@@ -121,7 +165,7 @@ class InPars:
             generate = self.model.generate
             padding_kwargs = {}
 
-        results = []
+        results = [] if not yield_results else None
         for i in tqdm(range(0, len(prompts), batch_size), desc="Generating queries"):
             batch_prompts = prompts[i : i + batch_size]
             batch_docs = documents[i : i + batch_size]
@@ -171,15 +215,18 @@ class InPars:
             sequence_scores = [prob_values[i][~pad_mask[i]].tolist()[:-1] for i in range(len(prob_values))]
 
             for (question, log_probs, prompt_text, doc_id, document) in zip(preds, sequence_scores, batch_prompts, batch_doc_ids, batch_docs):
-                results.append(
-                    { 
-                        "query": question,
-                        "log_probs": log_probs,
-                        "prompt_text": prompt_text,
-                        "doc_id": doc_id,
-                        "doc_text": document,
-                        "fewshot_examples": [example[0] for example in self.fewshot_examples],
-                    }
-                )
+                result = {
+                    "query": question,
+                    "log_probs": log_probs,
+                    "prompt_text": prompt_text,
+                    "doc_id": doc_id,
+                    "doc_text": document,
+                    "fewshot_examples": [example[0] for example in self.fewshot_examples],
+                }
+
+                if yield_results:
+                    yield result
+                else:
+                    results.append(result)
 
         return results
