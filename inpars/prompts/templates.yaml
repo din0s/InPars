@@ -92,7 +92,38 @@ promptagator-fever:
     {document}
     Is it true that {query}
 
+# Instruction templates
+instruction-arguana:
+  mode: instruction
+  instruction: Identify the main argument in the document and use it to construct a query that reflects the opposing view.
+  template: |
+    Example {example_idx}:
+    Document: {document}
+    Query: {query}
+
+# Contrastive instruction templates
+co-instruction-arguana:
+  mode: co-instruction
+  index: beir-v1.0.0-arguana-flat
+  instruction: Identify the main argument in the document and use it to construct a query that reflects the opposing view.
+  template: |
+    Example {example_idx}:
+    Relevant Document: {rel_document}
+    Irrelevant Document: {irr_document}
+    Query: {query}
+
 # Chat templates
 chat-arguana:
   mode: chat
-  template: Identify the main argument in the document and use it to construct a query that reflects the opposing view. Only respond with the generated query.
+  instruction: Identify the main argument in the document and use it to construct a query that reflects the opposing view.
+  template: |
+    {document}
+
+# Contrastive chat templates
+co-chat-arguana:
+  mode: co-chat
+  index: beir-v1.0.0-arguana-flat
+  instruction: Identify the main argument in the document and use it to construct a query that reflects the opposing view.
+  template: |
+    Relevant Document: {rel_document}
+    Irrelevant Document: {irr_document}
