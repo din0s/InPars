@@ -31,6 +31,7 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=1)
     parser.add_argument('--device', type=str, default=None)
     parser.add_argument('--temperature', type=float, default=1.0)
+    parser.add_argument('--no_repeat_ngram_size', type=int, default=0)
     parser.add_argument('--is_openai', action='store_true')
     parser.add_argument('--yield_results', action='store_true')
     # parser.add_argument('--verbose', action='store_true')
@@ -80,6 +81,7 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         yield_results=args.yield_results,
         temperature=args.temperature,
+        no_repeat_ngram_size=args.no_repeat_ngram_size,
     )
 
     if args.yield_results:

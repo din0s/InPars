@@ -178,7 +178,7 @@ class ContrastiveInstructionPrompt(InstructionPrompt):
             "irr_document": irr_document,
             "query": query,
         }
-        if example_idx in self.template:
+        if "example_idx" in self.template:
             args["example_idx"] = example_idx + 1
 
         return self.template.format(**args)
