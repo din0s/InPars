@@ -1,10 +1,12 @@
 import os
-import torch
 import random
-import pandas as pd
-from tqdm.auto import tqdm
 from functools import partial
-from transformers import AutoTokenizer, AutoModelForCausalLM
+
+import pandas as pd
+import torch
+from tqdm.auto import tqdm
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 from .prompt import Prompt
 
 
@@ -35,64 +37,84 @@ class InPars:
         max_query_length=None,
         max_prompt_length=None,
         max_new_tokens=64,
+        max_batch_size=1,
         fp16=False,
         int8=False,
         device=None,
         tf=False,
         verbose=False,
         is_openai=False,
+        is_llama=False,
     ):
         self.corpus = corpus
         self.max_doc_length = max_doc_length
         self.max_query_length = max_query_length
         self.max_prompt_length = max_prompt_length
         self.max_new_tokens = max_new_tokens
+        self.max_batch_size = max_batch_size
         self.n_fewshot_examples = n_fewshot_examples
         self.device = device
         self.verbose = verbose
         self.is_openai = is_openai
+        self.is_llama = is_llama
         if device is None:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        if self.is_openai:
-            self.openai_engine = base_model
-            base_model = "gpt2"
+        if self.is_llama:
+            from llama.llama import load
 
-        self.tokenizer = AutoTokenizer.from_pretrained(
-            base_model, padding_side="left"
-        )
-        self.tokenizer.pad_token = self.tokenizer.eos_token
-
-        model_kwargs = {"revision": revision}
-        if fp16:
-            model_kwargs["torch_dtype"] = torch.float16
-            model_kwargs["low_cpu_mem_usage"] = True
-        if int8:
-            model_kwargs["load_in_8bit"] = True
-            model_kwargs["device_map"] = "auto"
-
-        if fp16 and base_model == "EleutherAI/gpt-j-6B":
-            model_kwargs["revision"] = "float16"
-
-        self.tf = tf
-
-        if self.is_openai:
-            import openai
-            openai.api_key = os.getenv("OPENAI_API_KEY")
-        elif self.tf:
-            from transformers import TFAutoModelForCausalLM
-            self.model = TFAutoModelForCausalLM.from_pretrained(
-                base_model,
-                revision=revision,
+            base_dir = os.path.dirname(base_model)
+            llama, tokenizer = load(
+                ckpt_dir=base_model,
+                tokenizer_path=f"{base_dir}/tokenizer.model",
+                max_seq_len=max_prompt_length,
+                max_batch_size=max_batch_size,
+                quantize=int8,
             )
-            self.model.config.pad_token_id = self.model.config.eos_token_id
+
+            self.tokenizer = tokenizer
+            llama.model = torch.compile(llama.model)
+            llama.model.eval()
+            self.model = llama
         else:
-            self.model = AutoModelForCausalLM.from_pretrained(
-                base_model, **model_kwargs
+            if self.is_openai:
+                self.openai_engine = base_model
+                base_model = "gpt2"
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                base_model, padding_side="left"
             )
-            self.model = torch.compile(self.model)
-            self.model.to(self.device)
-            self.model.eval()
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+
+            model_kwargs = {"revision": revision}
+            if fp16:
+                model_kwargs["torch_dtype"] = torch.float16
+                model_kwargs["low_cpu_mem_usage"] = True
+            if int8:
+                model_kwargs["load_in_8bit"] = True
+                model_kwargs["device_map"] = "auto"
+
+            if fp16 and base_model == "EleutherAI/gpt-j-6B":
+                model_kwargs["revision"] = "float16"
+
+            self.tf = tf
+
+            if self.is_openai:
+                import openai
+                openai.api_key = os.getenv("OPENAI_API_KEY")
+            elif self.tf:
+                from transformers import TFAutoModelForCausalLM
+                self.model = TFAutoModelForCausalLM.from_pretrained(
+                    base_model,
+                    revision=revision,
+                )
+                self.model.config.pad_token_id = self.model.config.eos_token_id
+            else:
+                self.model = AutoModelForCausalLM.from_pretrained(
+                    base_model, **model_kwargs
+                )
+                self.model = torch.compile(self.model)
+                self.model.to(self.device)
+                self.model.eval()
 
         self.fewshot_examples = load_examples(corpus, self.n_fewshot_examples)
         self.prompter = Prompt.load(
@@ -124,7 +146,37 @@ class InPars:
             for document in tqdm(documents, disable=disable_pbar, desc="Building prompts")
         ]
 
-        if self.is_openai:
+        if self.is_llama:
+            results = [] if not yield_results else None
+            for i in tqdm(range(0, len(prompts), batch_size), desc="Generating queries"):
+                batch_prompts = prompts[i : i + batch_size]
+                batch_docs = documents[i : i + batch_size]
+                batch_doc_ids = doc_ids[i : i + batch_size]
+
+                preds = self.model.generate(
+                    batch_prompts,
+                    max_gen_len=self.max_new_tokens,
+                    only_new=True,
+                    **generate_kwargs,
+                )
+
+                for (question, prompt_text, doc_id, document) in zip(preds, batch_prompts, batch_doc_ids, batch_docs):
+                    result = {
+                        "query": question,
+                        "log_probs": [],
+                        "prompt_text": prompt_text,
+                        "doc_id": doc_id,
+                        "doc_text": document,
+                        "fewshot_examples": [example[0] for example in self.fewshot_examples],
+                    }
+
+                    if yield_results:
+                        yield result
+                    else:
+                        results.append(result)
+
+            return results
+        elif self.is_openai:
             assert batch_size == 1, "OpenAI only supports batch_size=1"
 
             import openai

@@ -1,9 +1,11 @@
-import os
-import json
 import argparse
+import json
+import os
+
 import pandas as pd
-from .dataset import load_corpus
 from transformers import set_seed
+
+from .dataset import load_corpus
 from .inpars import InPars
 
 if __name__ == "__main__":
@@ -21,6 +23,7 @@ if __name__ == "__main__":
     parser.add_argument('--max_query_length', default=200, type=int, required=False)
     parser.add_argument('--max_prompt_length', default=2048, type=int, required=False)
     parser.add_argument('--max_new_tokens', type=int, default=64)
+    parser.add_argument('--max_batch_size', type=int, default=1)
     parser.add_argument('--max_generations', type=int, default=100_000)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--revision', type=str, default=None)
@@ -31,8 +34,12 @@ if __name__ == "__main__":
     parser.add_argument('--seed', type=int, default=1)
     parser.add_argument('--device', type=str, default=None)
     parser.add_argument('--temperature', type=float, default=1.0)
+    parser.add_argument('--top_p', type=float, default=0.0)
+    parser.add_argument('--top_k', type=int, default=40)
+    parser.add_argument('--repetition_penalty', type=float, default=(1/0.85))
     parser.add_argument('--no_repeat_ngram_size', type=int, default=0)
     parser.add_argument('--is_openai', action='store_true')
+    parser.add_argument('--is_llama', action='store_true')
     parser.add_argument('--yield_results', action='store_true')
     # parser.add_argument('--verbose', action='store_true')
     args = parser.parse_args()
@@ -67,13 +74,23 @@ if __name__ == "__main__":
         max_query_length=args.max_query_length,
         max_prompt_length=args.max_prompt_length,
         max_new_tokens=args.max_new_tokens,
+        max_batch_size=args.max_batch_size,
         fp16=args.fp16,
         int8=args.int8,
         tf=args.tf,
         device=args.device,
         is_openai=args.is_openai,
+        is_llama=args.is_llama,
         # verbose=args.verbose,
     )
+
+    generate_kwargs = {}
+    if args.is_llama:
+        generate_kwargs['top_p'] = args.top_p
+        generate_kwargs['top_k'] = args.top_k
+        generate_kwargs['repetition_penalty'] = args.repetition_penalty
+    elif not args.is_openai:
+        generate_kwargs['no_repeat_ngram_size'] = args.no_repeat_ngram_size
 
     generated = generator.generate(
         documents=dataset['text'],
@@ -81,7 +98,7 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         yield_results=args.yield_results,
         temperature=args.temperature,
-        no_repeat_ngram_size=args.no_repeat_ngram_size,
+        **generate_kwargs,
     )
 
     if args.yield_results:
