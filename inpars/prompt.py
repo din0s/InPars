@@ -4,7 +4,6 @@ import random
 
 import ftfy
 import yaml
-from pyserini.search.lucene import LuceneSearcher
 
 with open(f"{os.path.dirname(__file__)}/prompts/templates.yaml") as f:
     templates = yaml.safe_load(f)
@@ -153,6 +152,7 @@ class ContrastiveInstructionPrompt(InstructionPrompt):
 
         self.topk = 50
 
+        from pyserini.search.lucene import LuceneSearcher
         if os.path.isdir(self.index):
             self.searcher = LuceneSearcher(self.index)
         else:
@@ -236,6 +236,7 @@ class ContrastiveChatPrompt(ChatPrompt):
 
         self.topk = 50
 
+        from pyserini.search.lucene import LuceneSearcher
         if os.path.isdir(self.index):
             self.searcher = LuceneSearcher(self.index)
         else:
