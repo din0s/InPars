@@ -28,8 +28,6 @@ if __name__ == '__main__':
                         help="Batch size for inference.")
     parser.add_argument('--n_samples', type=int, default=100)
     parser.add_argument('--threads', type=int, default=12)
-    parser.add_argument('--source', default='ir_datasets',
-                        help="The dataset source: ir_datasets or pyserini")
     parser.add_argument('--seed', type=int, default=1)
     args = parser.parse_args()
 
@@ -42,7 +40,7 @@ if __name__ == '__main__':
         else:
             corpus = pd.read_json(args.input, lines=True)
     else:
-        corpus = load_corpus(args.dataset, args.source, source=args.dataset_source)
+        corpus = load_corpus(args.dataset, args.dataset_source)
         index = f'beir-v1.0.0-{args.dataset}-flat'
 
     # Convert to {'doc_id': 'text'} format
