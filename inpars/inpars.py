@@ -54,6 +54,7 @@ class InPars:
         self.max_batch_size = max_batch_size
         self.n_fewshot_examples = n_fewshot_examples
         self.device = device
+        self.tf = tf
         self.verbose = verbose
         self.is_openai = is_openai
         self.is_llama = is_llama
@@ -61,7 +62,7 @@ class InPars:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         if self.is_llama:
-            from llama.llama import load
+            from llama import load
 
             base_dir = os.path.dirname(base_model)
             llama, tokenizer = load(
@@ -73,7 +74,7 @@ class InPars:
             )
 
             self.tokenizer = tokenizer
-            llama.model = torch.compile(llama.model)
+            #llama.model = torch.compile(llama.model)
             llama.model.eval()
             self.model = llama
         else:
@@ -95,8 +96,6 @@ class InPars:
 
             if fp16 and base_model == "EleutherAI/gpt-j-6B":
                 model_kwargs["revision"] = "float16"
-
-            self.tf = tf
 
             if self.is_openai:
                 import openai
@@ -150,8 +149,8 @@ class InPars:
             results = [] if not yield_results else None
             for i in tqdm(range(0, len(prompts), batch_size), desc="Generating queries"):
                 batch_prompts = prompts[i : i + batch_size]
-                batch_docs = documents[i : i + batch_size]
-                batch_doc_ids = doc_ids[i : i + batch_size]
+                batch_docs = documents.iloc[i : i + batch_size]
+                batch_doc_ids = doc_ids.iloc[i : i + batch_size]
 
                 preds = self.model.generate(
                     batch_prompts,
