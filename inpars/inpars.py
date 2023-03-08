@@ -62,6 +62,7 @@ class InPars:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         if self.is_llama:
+            os.environ["BITSANDBYTES_NOWELCOME"] = "1"
             from llama import load
 
             base_dir = os.path.dirname(base_model)
