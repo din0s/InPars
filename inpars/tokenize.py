@@ -57,6 +57,9 @@ if __name__ == "__main__":
     )
     corpus.save_to_disk(corpus_path)
     print("corpus dataset:", corpus)
+    with open(os.path.join(corpus_path, "mapping_id.txt"), "w") as f:
+        for idx, _id in enumerate(corpus["_id"]):
+            f.write(f"{_id}\t{idx}\n")
 
     queries = load_dataset("json", data_files=args.queries, split="train")
     queries = queries.map(
@@ -67,3 +70,6 @@ if __name__ == "__main__":
     )
     queries.save_to_disk(queries_path)
     print("query dataset:", queries)
+    with open(os.path.join(queries_path, "mapping_id.txt"), "w") as f:
+        for idx, _id in enumerate(queries["id"]):
+            f.write(f"{_id}\t{idx}\n")
