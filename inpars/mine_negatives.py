@@ -15,7 +15,7 @@ from .dataset import load_corpus
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=argparse.FileType("r"), required=True)
-    parser.add_argument("--output_dir", type=str, required=True)
+    parser.add_argument("--output_dir", type=str, default="./benc_data")
     parser.add_argument("--dataset", type=str)
     parser.add_argument(
         "--dataset_source",
