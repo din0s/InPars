@@ -1,3 +1,6 @@
 [submodule "llama"]
 	path = llama
 	url = git@github.com:din0s/llama.git
+[submodule "RetroMAE"]
+	path = RetroMAE
+	url = git@github.com:staoxiao/RetroMAE.git
