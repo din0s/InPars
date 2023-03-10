@@ -14,17 +14,15 @@ from .dataset import load_corpus
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--in_queries", type=argparse.FileType("r"), required=True)
-    parser.add_argument("--out_negs", type=argparse.FileType("w"), required=True)
-    parser.add_argument("--out_qrels", type=argparse.FileType("w"), required=True)
-    parser.add_argument("--out_qmap", type=argparse.FileType("w"), required=True)
+    parser.add_argument("--input", type=argparse.FileType("r"), required=True)
+    parser.add_argument("--output_dir", type=str, required=True)
     parser.add_argument("--dataset", type=str)
     parser.add_argument(
         "--dataset_source",
         default="ir_datasets",
         help="The dataset source: ir_datasets or pyserini",
     )
-    parser.add_argument("--index", type=str, default="msmarco-passage")
+    parser.add_argument("--index", type=str)
     parser.add_argument("--max_hits", type=int, default=500)
     parser.add_argument("--n_samples", type=int, default=128)
     parser.add_argument("--threads", type=int, default=8)
@@ -59,7 +57,7 @@ if __name__ == "__main__":
     n_no_query = 0
     n_docs_not_found = 0
     queries = {}
-    with args.in_queries as f:
+    with args.input as f:
         n_queries = sum(1 for _ in f)
         f.seek(0)
         for line in tqdm(f, desc="Loading synthetic queries", total=n_queries):
@@ -88,7 +86,11 @@ if __name__ == "__main__":
         k=args.max_hits + 1,
     )
 
-    with args.out_negs as f_negs, args.out_qrels as f_qrels, args.out_qmap as f_map:
+    os.makedirs(args.output_dir, exist_ok=True)
+    out_negs = open(os.path.join(args.output_dir, f"{args.dataset}_negs.tsv"), "w")
+    out_qrels = open(os.path.join(args.output_dir, f"{args.dataset}_qrels.tsv"), "w")
+    out_qmap = open(os.path.join(args.output_dir, f"{args.dataset}_queries.jsonl"), "w")
+    with out_negs as f_negs, out_qrels as f_qrels, out_qmap as f_map:
         neg_writer = csv.writer(f_negs, delimiter="\t", lineterminator="\n")
         qrel_writer = csv.writer(f_qrels, delimiter="\t", lineterminator="\n")
         for q_idx in tqdm(results, desc="Sampling"):
@@ -120,7 +122,7 @@ if __name__ == "__main__":
                 if len(neg_docs) > args.n_samples:
                     break
 
-            neg_writer.writerow([q_id, ", ".join(neg_docs)])
+            neg_writer.writerow([q_id, ",".join(neg_docs)])
 
     if n_no_query > 0:
         print(f"{n_no_query} lines without queries.")
