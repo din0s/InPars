@@ -175,6 +175,8 @@ poetry.toml
 wandb/
 synthetic/
 filtered/
+benc_data/
+tok_data/
 triples/
 models/
 runs/
