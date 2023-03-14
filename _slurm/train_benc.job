@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#SBATCH --job-name=TrainRetroMAE
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=18
+#SBATCH --mem=120gb
+#SBATCH --time=01:00:00
+#SBATCH --output=slurm_train_%A.out
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+source activate thesis
+
+mkdir -p $TMPDIR/hf_cache && export HF_DATASETS_CACHE=$_
+
+cd $HOME/InPars
+cp -r ./tok_data $TMPDIR
+
+python -u \
+    -m bi_encoder.run \
+    --output_dir ./models/arguana_retromae \
+    --model_name_or_path Shitao/RetroMAE_BEIR \
+    --do_train \
+    --corpus_file $TMPDIR/tok_data/corpus \
+    --train_query_file $TMPDIR/tok_data/queries \
+    --train_qrels ./benc_data/arguana_qrels.tsv \
+    --neg_file ./benc_data/arguana_negs.tsv \
+    --query_max_len 512 \
+    --passage_max_len 512 \
+    --bf16 \
+    --per_device_train_batch_size 16 \
+    --train_group_size 2 \
+    --sample_neg_from_topk 200 \
+    --learning_rate 1e-5 \
+    --num_train_epochs 1 \
+    --dataloader_num_workers 18
