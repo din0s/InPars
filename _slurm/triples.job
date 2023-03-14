@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
 #SBATCH --mem=120gb
-#SBATCH --time=01:00:00
+#SBATCH --time=02:00:00
 #SBATCH --output=slurm_triples_%A.out
 
 module purge
@@ -22,5 +22,6 @@ python -u \
     -m inpars.generate_triples \
     --input ./synthetic/arguana.jsonl \
     --output ./triples/arguana.tsv \
-    --dataset arguana
+    --dataset arguana \
+    --threads 18
 
