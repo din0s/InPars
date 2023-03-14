@@ -1,0 +1,37 @@
+#!/bin/bash
+
+#SBATCH --job-name=LLaMAInPars
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=18
+#SBATCH --mem=120gb
+#SBATCH --time=24:00:00
+#SBATCH --output=slurm_llama_%A.out
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+source activate thesis
+
+mkdir -p $TMPDIR/hf_cache && export HF_DATASETS_CACHE=$_
+cp -r $HOME/.cache/llama $TMPDIR
+
+cd $HOME/InPars
+mkdir -p synthetic
+
+python -u \
+    -m inpars.generate \
+    --prompt instruction-arguana \
+    --dataset arguana \
+    --base_model $TMPDIR/llama/7B \
+    --is_llama \
+    --output ./synthetic/arguana-llama.jsonl \
+    --n_fewshot_examples 1 \
+    --max_new_tokens 256 \
+    --max_query_length 512 \
+    --max_doc_length 512 \
+    --max_generations 10000 \
+    --max_batch_size 2 \
+    --batch_size 2 \
+    --yield_results
+
