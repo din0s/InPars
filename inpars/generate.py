@@ -40,7 +40,6 @@ if __name__ == "__main__":
     parser.add_argument('--no_repeat_ngram_size', type=int, default=0)
     parser.add_argument('--is_openai', action='store_true')
     parser.add_argument('--is_llama', action='store_true')
-    parser.add_argument('--yield_results', action='store_true')
     # parser.add_argument('--verbose', action='store_true')
     args = parser.parse_args()
     set_seed(args.seed)
@@ -84,31 +83,23 @@ if __name__ == "__main__":
         # verbose=args.verbose,
     )
 
-    generate_kwargs = {}
+    generate_kwargs = {
+        "temperature": args.temperature,
+        "top_p": args.top_p,
+    }
     if args.is_llama:
-        generate_kwargs['top_p'] = args.top_p
         generate_kwargs['top_k'] = args.top_k
         generate_kwargs['repetition_penalty'] = args.repetition_penalty
     elif not args.is_openai:
         generate_kwargs['no_repeat_ngram_size'] = args.no_repeat_ngram_size
 
-    generated = generator.generate(
+    for example in generator.generate_queries(
         documents=dataset['text'],
         doc_ids=dataset['doc_id'],
         batch_size=args.batch_size,
         yield_results=args.yield_results,
         temperature=args.temperature,
         **generate_kwargs,
-    )
-
-    if args.yield_results:
-        for example in generated:
-            with open(args.output, 'a') as f:
-                f.write(json.dumps(example) + '\n')
-    else:
-        dataset['query'] = [example['query'] for example in generated]
-        dataset['log_probs'] = [example['log_probs'] for example in generated]
-        dataset['prompt_text'] = [example['prompt_text'] for example in generated]
-        dataset['doc_id'] = [example['doc_id'] for example in generated]
-        dataset['fewshot_examples'] = [example['fewshot_examples'] for example in generated]
-        dataset.to_json(args.output, orient='records', lines=True)
+    ):
+        with open(args.output, 'a') as f:
+            f.write(json.dumps(example) + '\n')
