@@ -101,6 +101,14 @@ instruction-arguana:
     Document: {document}
     Query: {query}
 
+instruction-hotpotqa:
+  mode: instruction
+  instruction: Identify the subject of the document and ask a question about it.
+  template: |
+    Example {example_idx}:
+    Document: {document}
+    Query: {query}
+
 # Contrastive instruction templates
 co-instruction-arguana:
   mode: co-instruction
