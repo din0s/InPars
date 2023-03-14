@@ -5,7 +5,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=18
 #SBATCH --mem=120gb
-#SBATCH --time=01:00:00
+#SBATCH --time=12:00:00
 #SBATCH --output=slurm_queries_%A.out
 
 module purge
@@ -20,14 +20,18 @@ mkdir -p synthetic
 
 python -u \
     -m inpars.generate \
-    --prompt inpars-gbq \
+    --prompt instruction-arguana \
     --dataset arguana \
     --dataset_source ir_datasets \
-    --base_model togethercomputer/GPT-JT-6B-v1 \
+    --base_model EleutherAI/gpt-j-6B \
     --output ./synthetic/arguana.jsonl \
+    --n_fewshot_examples 1 \
+    --no_repeat_ngram 5 \
     --max_new_tokens 256 \
     --max_query_length 512 \
     --max_doc_length 512 \
     --max_generations 10000 \
-    --batch_size 8 \
+    --batch_size 4 \
+    --yield_results \
     --fp16
+
