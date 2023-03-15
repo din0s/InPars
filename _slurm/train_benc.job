@@ -16,7 +16,9 @@ source activate thesis
 mkdir -p $TMPDIR/hf_cache && export HF_DATASETS_CACHE=$_
 
 cd $HOME/InPars
-cp -r ./tok_data $TMPDIR
+
+mkdir -p $TMPDIR/benc_data && cp ./benc_data/arguana/* $_
+mkdir -p $TMPDIR/tok_data && cp ./tok_data/arguana/* $_
 
 python -u \
     -m bi_encoder.run \
@@ -25,8 +27,8 @@ python -u \
     --do_train \
     --corpus_file $TMPDIR/tok_data/corpus \
     --train_query_file $TMPDIR/tok_data/queries \
-    --train_qrels ./benc_data/arguana_qrels.tsv \
-    --neg_file ./benc_data/arguana_negs.tsv \
+    --train_qrels $TMPDIR/benc_data/qrels.tsv \
+    --neg_file $TMPDIR/benc_data/negs.tsv \
     --query_max_len 512 \
     --passage_max_len 512 \
     --bf16 \

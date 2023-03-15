@@ -1,0 +1,31 @@
+#!/bin/bash
+
+#SBATCH --job-name=TokenizeInPars
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=18
+#SBATCH --mem=120gb
+#SBATCH --time=01:00:00
+#SBATCH --output=slurm_tokenize_%A.out
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+source activate thesis
+
+mkdir -p $TMPDIR/hf_cache && export HF_DATASETS_CACHE=$_
+
+cd $HOME/InPars
+
+mkdir -p $TMPDIR/benc_data && cp ./benc_data/arguana/* $_
+mkdir -p $TMPDIR/dataset && cp $HOME/robustdr/data/arguana/* $_
+
+python -u \
+    -m inpars.tokenize \
+    --corpus $TMPDIR/dataset/corpus.jsonl \
+    --queries $TMPDIR/benc_data/queries.jsonl \
+    --output_dir ./tok_data/arguana \
+    --tokenizer bert-base-uncased \
+    --max_seq_length 512 \
+    --use_title \
+    --threads 18
