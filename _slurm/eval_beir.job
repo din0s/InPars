@@ -6,7 +6,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=18
 #SBATCH --mem=120gb
-#SBATCH --time=01:00:00
+#SBATCH --time=06:00:00
 #SBATCH --output=slurm_eval_beir_%A.out
 
 module purge
@@ -21,6 +21,6 @@ python -u \
     --model_name_or_path ./models/arguana_retromae \
     --dataset arguana \
     --split test \
-    --batch_size 128 \
+    --batch_size 512 \
     --pooling_strategy cls \
     --score_function dot
