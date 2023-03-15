@@ -109,6 +109,14 @@ instruction-hotpotqa:
     Document: {document}
     Query: {query}
 
+instruction-nq:
+  mode: instruction
+  instruction: Identify the subject of the document, then form a query using the subject and relevant information from the document.
+  template: |
+    Example {example_idx}:
+    Document: {document}
+    Query: {query}
+
 # Contrastive instruction templates
 co-instruction-arguana:
   mode: co-instruction
