@@ -86,10 +86,11 @@ if __name__ == "__main__":
         k=args.max_hits + 1,
     )
 
-    os.makedirs(args.output_dir, exist_ok=True)
-    out_negs = open(os.path.join(args.output_dir, f"{args.dataset}_negs.tsv"), "w")
-    out_qrels = open(os.path.join(args.output_dir, f"{args.dataset}_qrels.tsv"), "w")
-    out_qmap = open(os.path.join(args.output_dir, f"{args.dataset}_queries.jsonl"), "w")
+    dir = os.path.join(args.output_dir, args.dataset)
+    os.makedirs(dir, exist_ok=True)
+    out_negs = open(os.path.join(dir, "negs.tsv"), "w")
+    out_qrels = open(os.path.join(dir, "qrels.tsv"), "w")
+    out_qmap = open(os.path.join(dir, "queries.jsonl"), "w")
     with out_negs as f_negs, out_qrels as f_qrels, out_qmap as f_map:
         neg_writer = csv.writer(f_negs, delimiter="\t", lineterminator="\n")
         qrel_writer = csv.writer(f_qrels, delimiter="\t", lineterminator="\n")
