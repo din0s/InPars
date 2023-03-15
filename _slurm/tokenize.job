@@ -18,7 +18,7 @@ mkdir -p $TMPDIR/hf_cache && export HF_DATASETS_CACHE=$_
 cd $HOME/InPars
 
 mkdir -p $TMPDIR/benc_data && cp ./benc_data/arguana/* $_
-mkdir -p $TMPDIR/dataset && cp $HOME/robustdr/data/arguana/* $_
+mkdir -p $TMPDIR/dataset && cp $HOME/robustdr/data/arguana/corpus.jsonl $_
 
 python -u \
     -m inpars.tokenize \

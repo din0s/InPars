@@ -36,7 +36,7 @@ python -u \
 
 # Tokenize
 mkdir -p $TMPDIR/benc_data && cp ./benc_data/$DATASET/* $_
-mkdir -p $TMPDIR/dataset && cp $HOME/robustdr/data/$DATASET/* $_
+mkdir -p $TMPDIR/dataset && cp $HOME/robustdr/data/$DATASET/corpus.jsonl $_
 python -u \
     -m inpars.tokenize \
     --corpus $TMPDIR/dataset/corpus.jsonl \
@@ -48,7 +48,7 @@ python -u \
     --threads 18
 
 # Train
-mkdir -p $TMPDIR/tok_data && cp ./tok_data/$DATASET/* $_
+mkdir -p $TMPDIR/tok_data && cp -r ./tok_data/$DATASET/* $_
 python -u \
     -m bi_encoder.run \
     --output_dir ./models/retromae_$DATASET \
