@@ -62,8 +62,8 @@ class InPars:
             batch_doc_ids = doc_ids.iloc[
                 batch_idx * batch_size : (batch_idx + 1) * batch_size
             ]
-            yield [
-                {
+            for idx, result in enumerate(batch_results):
+                yield {
                     "query": result["output"],
                     "log_probs": result["probs"],
                     "prompt_text": result["prompt"],
@@ -71,5 +71,4 @@ class InPars:
                     "doc_text": result["input"],
                     "fewshot_examples": fewshot_examples,
                 }
-                for idx, result in enumerate(batch_results)
-            ]
+

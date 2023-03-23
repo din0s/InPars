@@ -48,14 +48,14 @@ class FewShotModel:
             self.openai_engine = base_model
             base_model = "gpt2"
 
+        tok_class = AutoTokenizer
         if "llama" in base_model:
             from transformers import LlamaTokenizer
+            tok_class = LlamaTokenizer
 
-            self.tokenizer = LlamaTokenizer.from_pretrained(base_model)
-        else:
-            self.tokenizer = AutoTokenizer.from_pretrained(
-                base_model, padding_side="left"
-            )
+        self.tokenizer = tok_class.from_pretrained(
+            base_model, padding_side="left"
+        )
         self.tokenizer.pad_token = self.tokenizer.eos_token
         self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
 
@@ -65,6 +65,7 @@ class FewShotModel:
             self.newline_token_id = 198
         elif "llama" in base_model:
             self.newline_token_id = 13
+            self.tokenizer.model_max_length = 2048
 
         model_kwargs = {"revision": revision}
         if fp16:
@@ -244,18 +245,12 @@ class FewShotModel:
                 batch_probs[i][~pad_mask[i]].tolist()[:-1]
                 for i in range(len(batch_probs))
             ]
-            yield [
-                Result(input, prompt, out, probs)
-                for input, prompt, out, probs in zip(
-                    batch_inputs, batch_prompts, batch_outputs, batch_probs
-                )
-            ]
+            yield Result(batch_inputs, batch_prompts, batch_outputs, batch_probs)
 
 
 class Result:
     def __init__(self, inputs, prompts, outputs, probs=None):
-        assert len(inputs) == len(prompts) == len(outputs)
-        self.inputs = inputs
+        self.inputs = inputs.values if isinstance(inputs, pd.Series) else inputs
         self.prompts = prompts
         self.outputs = outputs
         if probs is not None:

@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+os.environ["BITSANDBYTES_NOWELCOME"] = "1"
 
 import pandas as pd
 from transformers import set_seed
