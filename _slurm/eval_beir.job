@@ -1,0 +1,26 @@
+#!/bin/bash
+
+#SBATCH --job-name=EvalBEIR
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=18
+#SBATCH --mem=120gb
+#SBATCH --time=06:00:00
+#SBATCH --output=slurm_eval_beir_%A.out
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+source activate thesis
+
+cd $HOME/InPars
+
+python -u \
+    ./RetroMAE/examples/retriever/BEIR/beir_test.py \
+    --model_name_or_path ./models/arguana_retromae \
+    --dataset arguana \
+    --split test \
+    --batch_size 512 \
+    --pooling_strategy cls \
+    --score_function dot

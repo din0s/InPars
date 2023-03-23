@@ -1,0 +1,80 @@
+#!/bin/bash
+
+#SBATCH --job-name=RetroMAE
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:1
+#SBATCH --cpus-per-task=18
+#SBATCH --mem=120gb
+#SBATCH --time=06:00:00
+#SBATCH --output=slurm_retromae_%A.out
+
+set -eo pipefail
+
+DATASET="nq"
+IR_DATASET="nq"
+
+module purge
+module load 2022
+module load Anaconda3/2022.05
+module load Java/11.0.16
+source activate thesis
+
+mkdir -p $TMPDIR/hf_cache && export HF_DATASETS_CACHE=$_
+
+cd $HOME/InPars
+
+# Mine negatives
+python -u \
+    -m inpars.mine_negatives \
+    --input ./synthetic/$DATASET.jsonl \
+    --output_dir ./benc_data \
+    --dataset $IR_DATASET \
+    --dataset_source ir_datasets \
+    --max_hits 500 \
+    --n_samples 128 \
+    --threads 18
+
+# Tokenize
+mkdir -p $TMPDIR/benc_data && cp ./benc_data/$DATASET/* $_
+mkdir -p $TMPDIR/dataset && cp $HOME/robustdr/data/$DATASET/corpus.jsonl $_
+python -u \
+    -m inpars.tokenize \
+    --corpus $TMPDIR/dataset/corpus.jsonl \
+    --queries $TMPDIR/benc_data/queries.jsonl \
+    --output_dir ./tok_data/$DATASET \
+    --tokenizer bert-base-uncased \
+    --max_seq_length 512 \
+    --use_title \
+    --threads 18
+
+# Train
+mkdir -p $TMPDIR/tok_data && cp -r ./tok_data/$DATASET/* $_
+python -u \
+    -m bi_encoder.run \
+    --output_dir ./models/retromae_$DATASET \
+    --model_name_or_path Shitao/RetroMAE_BEIR \
+    --do_train \
+    --corpus_file $TMPDIR/tok_data/corpus \
+    --train_query_file $TMPDIR/tok_data/queries \
+    --train_qrels $TMPDIR/benc_data/qrels.tsv \
+    --neg_file $TMPDIR/benc_data/negs.tsv \
+    --query_max_len 512 \
+    --passage_max_len 512 \
+    --bf16 \
+    --per_device_train_batch_size 16 \
+    --train_group_size 2 \
+    --sample_neg_from_topk 200 \
+    --learning_rate 1e-5 \
+    --num_train_epochs 1 \
+    --dataloader_num_workers 18
+
+# Evaluate
+python -u \
+    ./RetroMAE/examples/retriever/BEIR/beir_test.py \
+    --model_name_or_path ./models/retromae_$DATASET \
+    --dataset $IR_DATASET \
+    --split test \
+    --batch_size 512 \
+    --pooling_strategy cls \
+    --score_function dot
+
