@@ -4,6 +4,7 @@ from functools import partial
 
 import pandas as pd
 import torch
+from peft import PeftModel
 from tqdm.auto import tqdm
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -14,6 +15,7 @@ class FewShotModel:
     def __init__(
         self,
         base_model="EleutherAI/gpt-j-6B",
+        lora_weights=None,
         revision=None,
         corpus=None,
         prompt=None,
@@ -29,7 +31,6 @@ class FewShotModel:
         tf=False,
         verbose=False,
         is_openai=False,
-        is_llama=False,
     ):
         self.corpus = corpus
         self.max_doc_length = max_doc_length
@@ -42,66 +43,67 @@ class FewShotModel:
         self.tf = tf
         self.verbose = verbose
         self.is_openai = is_openai
-        self.is_llama = is_llama
         if device is None:
             self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
-        if self.is_llama:
-            os.environ["BITSANDBYTES_NOWELCOME"] = "1"
-            from llama import load
+        if self.is_openai:
+            self.openai_engine = base_model
+            base_model = "gpt2"
 
-            base_dir = os.path.dirname(base_model)
-            llama, tokenizer = load(
-                ckpt_dir=base_model,
-                tokenizer_path=f"{base_dir}/tokenizer.model",
-                max_seq_len=max_prompt_length,
-                max_batch_size=max_batch_size,
-                quantize=int8,
-            )
+        if "llama" in base_model:
+            from transformers import LlamaTokenizer
 
-            self.tokenizer = tokenizer
-            # llama.model = torch.compile(llama.model)
-            llama.model.eval()
-            self.model = llama
+            self.tokenizer = LlamaTokenizer.from_pretrained(base_model)
         else:
-            if self.is_openai:
-                self.openai_engine = base_model
-                base_model = "gpt2"
             self.tokenizer = AutoTokenizer.from_pretrained(
                 base_model, padding_side="left"
             )
-            self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer.pad_token = self.tokenizer.eos_token
+        self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
 
-            model_kwargs = {"revision": revision}
-            if fp16:
-                model_kwargs["torch_dtype"] = torch.float16
-                model_kwargs["low_cpu_mem_usage"] = True
-            if int8:
-                model_kwargs["load_in_8bit"] = True
-                model_kwargs["device_map"] = "auto"
+        # Hardcode \n token for EOS
+        self.newline_token_id = None
+        if base_model == "EleutherAI/gpt-j-6B":
+            self.newline_token_id = 198
+        elif "llama" in base_model:
+            self.newline_token_id = 13
 
-            if fp16 and base_model == "EleutherAI/gpt-j-6B":
-                model_kwargs["revision"] = "float16"
+        model_kwargs = {"revision": revision}
+        if fp16:
+            model_kwargs["torch_dtype"] = torch.float16
+            model_kwargs["low_cpu_mem_usage"] = True
+        if int8:
+            model_kwargs["load_in_8bit"] = True
+            model_kwargs["device_map"] = "auto"
 
-            if self.is_openai:
-                import openai
+        if fp16 and base_model == "EleutherAI/gpt-j-6B":
+            model_kwargs["revision"] = "float16"
 
-                openai.api_key = os.getenv("OPENAI_API_KEY")
-            elif self.tf:
-                from transformers import TFAutoModelForCausalLM
+        if self.is_openai:
+            import openai
 
-                self.model = TFAutoModelForCausalLM.from_pretrained(
-                    base_model,
-                    revision=revision,
+            openai.api_key = os.getenv("OPENAI_API_KEY")
+        elif self.tf:
+            from transformers import TFAutoModelForCausalLM
+
+            self.model = TFAutoModelForCausalLM.from_pretrained(
+                base_model,
+                revision=revision,
+            )
+            self.model.config.pad_token_id = self.model.config.eos_token_id
+        else:
+            self.model = AutoModelForCausalLM.from_pretrained(
+                base_model, **model_kwargs
+            )
+            if lora_weights is not None:
+                self.model = PeftModel.from_pretrained(
+                    self.model,
+                    lora_weights,
+                    torch_dtype=model_kwargs.get("torch_dtype", None),
                 )
-                self.model.config.pad_token_id = self.model.config.eos_token_id
-            else:
-                self.model = AutoModelForCausalLM.from_pretrained(
-                    base_model, **model_kwargs
-                )
-                self.model = torch.compile(self.model)
-                self.model.to(self.device)
-                self.model.eval()
+            self.model = torch.compile(self.model)
+            self.model.to(self.device)
+            self.model.eval()
 
         self.fewshot_examples = self._load_examples()
         self.prompter = Prompt.load(
@@ -142,33 +144,13 @@ class FewShotModel:
 
     @torch.no_grad()
     def generate(self, inputs, batch_size=1, **kwargs):
-        if self.is_llama:
-            return self._generate_llama(inputs, batch_size, **kwargs)
-        elif self.is_openai:
+        if self.is_openai:
             if "gpt-3.5" in self.openai_engine:
                 return self._generate_openai_chat(inputs, batch_size, **kwargs)
             else:
                 return self._generate_openai_complete(inputs, batch_size, **kwargs)
         else:
             return self._generate_hf(inputs, batch_size, **kwargs)
-
-    def _generate_llama(self, inputs, batch_size=1, **kwargs):
-        prompts = self._build_prompts(inputs)
-        for i in tqdm(range(0, len(prompts), batch_size), desc="Generating text"):
-            batch_prompts = prompts[i : i + batch_size]
-            batch_inputs = inputs[i : i + batch_size]
-            batch_outputs = self.model.generate(
-                batch_prompts,
-                max_length=self.max_prompt_length,
-                only_new=True,
-                **kwargs,
-            )
-            yield [
-                Result(input, prompt, out)
-                for input, prompt, out in zip(
-                    batch_inputs, batch_prompts, batch_outputs
-                )
-            ]
 
     def _generate_openai_chat(self, inputs, batch_size=1, **kwargs):
         assert batch_size == 1, "Batch size must be 1 for OpenAI Chat API"
@@ -245,7 +227,7 @@ class FewShotModel:
                 output_scores=True,
                 return_dict=True,
                 return_dict_in_generate=True,
-                eos_token_id=198,  # hardcoded Ċ id
+                eos_token_id=self.newline_token_id,
                 bos_token_id=self.tokenizer.bos_token_id,
                 pad_token_id=self.tokenizer.pad_token_id,
                 **kwargs,

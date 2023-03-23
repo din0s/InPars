@@ -5,6 +5,7 @@ class InPars:
     def __init__(
         self,
         base_model="EleutherAI/gpt-j-6B",
+        lora_weights=None,
         revision=None,
         corpus=None,
         prompt=None,
@@ -20,10 +21,10 @@ class InPars:
         tf=False,
         verbose=False,
         is_openai=False,
-        is_llama=False,
     ):
         self.model = FewShotModel(
             base_model=base_model,
+            lora_weights=lora_weights,
             revision=revision,
             corpus=corpus,
             prompt=prompt,
@@ -39,7 +40,6 @@ class InPars:
             tf=tf,
             verbose=verbose,
             is_openai=is_openai,
-            is_llama=is_llama,
         )
 
     def generate_instruction(self, **generate_kwargs):
