@@ -31,7 +31,4 @@ python -u \
     --max_query_length 512 \
     --max_doc_length 512 \
     --max_generations 10000 \
-    --max_batch_size 2 \
-    --batch_size 2 \
-    --yield_results
-
+    --batch_size 2

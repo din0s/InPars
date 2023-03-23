@@ -13,7 +13,6 @@ if __name__ == "__main__":
     parser.add_argument("--max_query_length", default=200, type=int, required=False)
     parser.add_argument("--max_prompt_length", default=2048, type=int, required=False)
     parser.add_argument("--max_new_tokens", type=int, default=64)
-    parser.add_argument("--max_batch_size", type=int, default=1)
     # parser.add_argument('--max_generations', type=int, default=1)
     parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--revision", type=str, default=None)
@@ -41,7 +40,6 @@ if __name__ == "__main__":
         max_query_length=args.max_query_length,
         max_prompt_length=args.max_prompt_length,
         max_new_tokens=args.max_new_tokens,
-        max_batch_size=args.max_batch_size,
         fp16=args.fp16,
         int8=args.int8,
         tf=args.tf,

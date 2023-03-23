@@ -24,7 +24,6 @@ class FewShotModel:
         max_query_length=None,
         max_prompt_length=None,
         max_new_tokens=64,
-        max_batch_size=1,
         fp16=False,
         int8=False,
         device=None,
@@ -37,7 +36,6 @@ class FewShotModel:
         self.max_query_length = max_query_length
         self.max_prompt_length = max_prompt_length
         self.max_new_tokens = max_new_tokens
-        self.max_batch_size = max_batch_size
         self.n_fewshot_examples = n_fewshot_examples
         self.device = device
         self.tf = tf

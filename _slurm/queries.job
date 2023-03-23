@@ -32,6 +32,5 @@ python -u \
     --max_doc_length 512 \
     --max_generations 10000 \
     --batch_size 4 \
-    --yield_results \
     --fp16
 
