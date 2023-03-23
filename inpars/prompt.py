@@ -41,6 +41,7 @@ class Prompt:
                 "dynamic": DynamicPrompt,
                 "static": StaticPrompt,
                 "instruction": InstructionPrompt,
+                "causal-instruction": CausalInstructionPrompt,
                 "co-instruction": ContrastiveInstructionPrompt,
                 "chat": ChatPrompt,
                 "co-chat": ContrastiveChatPrompt,
@@ -83,7 +84,7 @@ class StaticPrompt(Prompt):
 
 
 class DynamicPrompt(Prompt):
-    def build(self, document, n_examples=3):
+    def build(self, text, n_examples=3):
         random_examples = random.sample(self.examples, n_examples)
 
         prompt = self._get_base_prompt()
@@ -94,17 +95,20 @@ class DynamicPrompt(Prompt):
 
             prompt += self._format_template(doc, query, i)
 
-        document = ftfy.fix_text(document)
-        if self.max_doc_length:
-            document = self.tokenizer.decode(
-                self.tokenizer(
-                    document,
-                    truncation=True,
-                    max_length=self.max_doc_length,
-                )["input_ids"]
-            )
+        if self._append_suffix():
+            prompt += text.rstrip()
+        else:
+            document = ftfy.fix_text(text)
+            if self.max_doc_length:
+                document = self.tokenizer.decode(
+                    self.tokenizer(
+                        document,
+                        truncation=True,
+                        max_length=self.max_doc_length,
+                    )["input_ids"]
+                )
 
-        prompt += self._format_template(document, "", n_examples).rstrip()
+            prompt += self._format_template(document, "", n_examples).rstrip()
 
         if self.max_prompt_length:
             prompt_length = len(self.tokenizer.tokenize(prompt))
@@ -118,6 +122,9 @@ class DynamicPrompt(Prompt):
 
     def _get_base_prompt(self):
         return ""
+
+    def _append_suffix(self):
+        return False
 
     def _format_template(self, document, query, example_idx):
         args = {
@@ -145,6 +152,12 @@ class InstructionPrompt(DynamicPrompt):
     def _get_base_prompt(self):
         return self.instruction + " Only respond with the generated query.\n\n"
 
+class CausalInstructionPrompt(DynamicPrompt):
+    def _get_base_prompt(self):
+        return self.instruction + "\n\n"
+
+    def _append_suffix(self):
+        return True
 
 class ContrastiveInstructionPrompt(InstructionPrompt):
     def __init__(self, **kwargs):

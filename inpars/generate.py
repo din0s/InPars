@@ -11,6 +11,7 @@ from .inpars import InPars
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--base_model', default='EleutherAI/gpt-j-6B')
+    parser.add_argument('--lora_weights', default=None)
     parser.add_argument('--prompt', type=str, default="inpars",
                         help="Prompt type to be used during query generation: \
                         inpars, promptagator or custom")
@@ -38,9 +39,8 @@ if __name__ == "__main__":
     parser.add_argument('--top_k', type=int, default=40)
     parser.add_argument('--repetition_penalty', type=float, default=(1/0.85))
     parser.add_argument('--no_repeat_ngram_size', type=int, default=0)
+    parser.add_argument('--do_sample', action='store_true')
     parser.add_argument('--is_openai', action='store_true')
-    parser.add_argument('--is_llama', action='store_true')
-    parser.add_argument('--yield_results', action='store_true')
     # parser.add_argument('--verbose', action='store_true')
     args = parser.parse_args()
     set_seed(args.seed)
@@ -66,6 +66,7 @@ if __name__ == "__main__":
 
     generator = InPars(
         base_model=args.base_model,
+        lora_weights=args.lora_weights,
         revision=args.revision,
         corpus=args.dataset,
         prompt=args.prompt,
@@ -80,35 +81,25 @@ if __name__ == "__main__":
         tf=args.tf,
         device=args.device,
         is_openai=args.is_openai,
-        is_llama=args.is_llama,
         # verbose=args.verbose,
     )
 
-    generate_kwargs = {}
-    if args.is_llama:
-        generate_kwargs['top_p'] = args.top_p
+    generate_kwargs = {
+        "temperature": args.temperature,
+        "top_p": args.top_p,
+    }
+    if not args.is_openai:
         generate_kwargs['top_k'] = args.top_k
         generate_kwargs['repetition_penalty'] = args.repetition_penalty
-    elif not args.is_openai:
         generate_kwargs['no_repeat_ngram_size'] = args.no_repeat_ngram_size
+        generate_kwargs['do_sample'] = args.do_sample
 
-    generated = generator.generate(
+    for example in generator.generate_queries(
         documents=dataset['text'],
         doc_ids=dataset['doc_id'],
         batch_size=args.batch_size,
         yield_results=args.yield_results,
-        temperature=args.temperature,
         **generate_kwargs,
-    )
-
-    if args.yield_results:
-        for example in generated:
-            with open(args.output, 'a') as f:
-                f.write(json.dumps(example) + '\n')
-    else:
-        dataset['query'] = [example['query'] for example in generated]
-        dataset['log_probs'] = [example['log_probs'] for example in generated]
-        dataset['prompt_text'] = [example['prompt_text'] for example in generated]
-        dataset['doc_id'] = [example['doc_id'] for example in generated]
-        dataset['fewshot_examples'] = [example['fewshot_examples'] for example in generated]
-        dataset.to_json(args.output, orient='records', lines=True)
+    ):
+        with open(args.output, 'a') as f:
+            f.write(json.dumps(example) + '\n')

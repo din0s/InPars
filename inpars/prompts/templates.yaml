@@ -92,6 +92,14 @@ promptagator-fever:
     {document}
     Is it true that {query}
 
+# Causal instruction templates
+instruction-extract:
+  mode: causal-instruction
+  instruction: "Focus on identifying the relationship between each query and document. Write an instruction that could be used to generate the query from each corresponding document. The instruction should be the same for all pairs, but not be exclusive to them. Example pairs:"
+  template: |+
+    Query {example_idx}: {query}
+    Document {example_idx}: {document}
+
 # Instruction templates
 instruction-arguana:
   mode: instruction
