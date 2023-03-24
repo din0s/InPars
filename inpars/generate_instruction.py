@@ -7,6 +7,7 @@ from .inpars import InPars
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--base_model", default="EleutherAI/gpt-j-6B")
+    parser.add_argument('--lora_weights', default=None)
     parser.add_argument("--dataset", required=True, help="Dataset name from BEIR")
     parser.add_argument("--n_fewshot_examples", type=int, default=3)
     parser.add_argument("--max_doc_length", default=256, type=int, required=False)
@@ -22,16 +23,19 @@ if __name__ == "__main__":
     parser.add_argument("--output", type=str, required=True)
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--device", type=str, default=None)
-    parser.add_argument("--temperature", type=float, default=1.0)
-    parser.add_argument("--top_p", type=float, default=0.0)
-    parser.add_argument("--top_k", type=int, default=40)
+    parser.add_argument('--temperature', type=float, default=1.0)
+    parser.add_argument('--top_p', type=float, default=0.0)
+    parser.add_argument('--top_k', type=int, default=40)
+    parser.add_argument('--repetition_penalty', type=float, default=(1/0.85))
+    parser.add_argument('--no_repeat_ngram_size', type=int, default=0)
+    parser.add_argument('--do_sample', action='store_true')
     parser.add_argument("--is_openai", action="store_true")
-    parser.add_argument("--is_llama", action="store_true")
     args = parser.parse_args()
     set_seed(args.seed)
 
     generator = InPars(
         base_model=args.base_model,
+        lora_weights=args.lora_weights,
         revision=args.revision,
         corpus=args.dataset,
         prompt="instruction-extract",
@@ -45,7 +49,6 @@ if __name__ == "__main__":
         tf=args.tf,
         device=args.device,
         is_openai=args.is_openai,
-        is_llama=args.is_llama,
         # verbose=args.verbose,
     )
 
@@ -53,11 +56,11 @@ if __name__ == "__main__":
         "temperature": args.temperature,
         "top_p": args.top_p,
     }
-    if args.is_llama:
-        generate_kwargs["top_k"] = args.top_k
-        generate_kwargs["repetition_penalty"] = args.repetition_penalty
-    elif not args.is_openai:
-        generate_kwargs["no_repeat_ngram_size"] = args.no_repeat_ngram_size
+    if not args.is_openai:
+        generate_kwargs['top_k'] = args.top_k
+        generate_kwargs['repetition_penalty'] = args.repetition_penalty
+        generate_kwargs['no_repeat_ngram_size'] = args.no_repeat_ngram_size
+        generate_kwargs['do_sample'] = args.do_sample
 
     instruction = generator.generate_instruction(**generate_kwargs)
     with open(args.output, "w") as f:

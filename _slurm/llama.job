@@ -23,12 +23,17 @@ python -u \
     -m inpars.generate \
     --prompt instruction-arguana \
     --dataset arguana \
-    --base_model $TMPDIR/llama/7B \
-    --is_llama \
+    --base_model decapoda-research/llama-13b-hf \
+    --lora_weights mattreid/alpaca-lora-13b \
     --output ./synthetic/arguana-llama.jsonl \
     --n_fewshot_examples 1 \
     --max_new_tokens 256 \
     --max_query_length 512 \
     --max_doc_length 512 \
     --max_generations 10000 \
-    --batch_size 2
+    --batch_size 4 \
+    --fp16 \
+    --temperature 0.7 \
+    --top_p 0.95 \
+    --top_k 40 \
+    --do_sample
