@@ -40,6 +40,7 @@ class Prompt:
             prompt_class = {
                 "dynamic": DynamicPrompt,
                 "static": StaticPrompt,
+                "alpaca": AlpacaPrompt,
                 "instruction": InstructionPrompt,
                 "causal-instruction": CausalInstructionPrompt,
                 "co-instruction": ContrastiveInstructionPrompt,
@@ -148,9 +149,19 @@ class DynamicPrompt(Prompt):
         return query
 
 
+class AlpacaPrompt(DynamicPrompt):
+    def _get_base_prompt(self):
+        return (
+            "Below is an instruction that describes a task, paired with an input that provides further context. "
+            "Write a response that appropriately completes the request.\n\n"
+            f"### Instruction:\n{self.instruction}\n"
+        )
+
+
 class InstructionPrompt(DynamicPrompt):
     def _get_base_prompt(self):
         return self.instruction + " Only respond with the generated query.\n\n"
+
 
 class CausalInstructionPrompt(DynamicPrompt):
     def _get_base_prompt(self):
@@ -159,6 +170,7 @@ class CausalInstructionPrompt(DynamicPrompt):
     def _append_suffix(self):
         return True
 
+
 class ContrastiveInstructionPrompt(InstructionPrompt):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -166,6 +178,7 @@ class ContrastiveInstructionPrompt(InstructionPrompt):
         self.topk = 50
 
         from pyserini.search.lucene import LuceneSearcher
+
         if os.path.isdir(self.index):
             self.searcher = LuceneSearcher(self.index)
         else:
@@ -250,6 +263,7 @@ class ContrastiveChatPrompt(ChatPrompt):
         self.topk = 50
 
         from pyserini.search.lucene import LuceneSearcher
+
         if os.path.isdir(self.index):
             self.searcher = LuceneSearcher(self.index)
         else:

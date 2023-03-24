@@ -125,6 +125,17 @@ instruction-nq:
     Document: {document}
     Query: {query}
 
+# Alpaca templates
+alpaca-arguana:
+  mode: alpaca
+  instruction: Identify the main argument in the document and use it to construct a query that reflects the opposing view.
+  template: |+
+    ### Input:
+    Document: {document}
+
+    ### Response:
+    Query: {query}
+
 # Contrastive instruction templates
 co-instruction-arguana:
   mode: co-instruction
