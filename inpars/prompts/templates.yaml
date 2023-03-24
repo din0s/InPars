@@ -100,43 +100,110 @@ instruction-extract:
     Query {example_idx}: {query}
     Document {example_idx}: {document}
 
-# Instruction templates
-instruction-arguana:
-  mode: instruction
-  instruction: Identify the main argument in the document and use it to construct a query that reflects the opposing view.
-  template: |
-    Example {example_idx}:
-    Document: {document}
-    Query: {query}
-
-instruction-hotpotqa:
-  mode: instruction
-  instruction: Identify the subject of the document and ask a question about it.
-  template: |
-    Example {example_idx}:
-    Document: {document}
-    Query: {query}
-
-instruction-fiqa:
-  mode: instruction
-  instruction: Identify the main topic of the document and use it to generate a query.
-  template: |
-    Example {example_idx}:
-    Document: {document}
-    Query: {query}
-
-instruction-nq:
-  mode: instruction
-  instruction: Identify the subject of the document, then form a query using the subject and relevant information from the document.
-  template: |
-    Example {example_idx}:
-    Document: {document}
-    Query: {query}
-
 # Alpaca templates
 alpaca-arguana:
   mode: alpaca
   instruction: Identify the main argument in the document and use it to construct a query that reflects the opposing view.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
+alpaca-climate-fever:
+  mode: alpaca
+  instruction: Identify the main topic of the document and create a query that reflects the main point of the document.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
+alpaca-dbpedia-entity:
+  mode: alpaca
+  instruction: Identify the main topic of the document and combine it with relevant keywords to generate a query.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
+alpaca-fever:
+  mode: alpaca
+  instruction: Generate a query by stating the subject of the document followed by a statement about the subject.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
+alpaca-fever:
+  mode: alpaca
+  instruction: Generate a query by stating the subject of the document followed by a statement about the subject.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
+alpaca-fiqa:
+  mode: alpaca
+  instruction: Identify the main topic of the document and create a query that asks a related question.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
+alpaca-hotpotqa:
+  mode: alpaca
+  instruction: For each document, generate a query that asks about a specific detail mentioned in the document.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
+alpaca-nfcorpus:
+  mode: alpaca
+  instruction: For each document, identify a keyword related to the topic of the document and use it as the query.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
+alpaca-nq:
+  mode: alpaca
+  instruction: For each document, generate a query that asks who, what, where, when, why, or how related to the content of the document.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
+alpaca-quora:
+  mode: alpaca
+  instruction: Combine the main topic of the document with a question word (e.g. what, why, how, etc.) to form a query.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
+alpaca-scidocs:
+  mode: alpaca
+  instruction: Generate a query by combining the main topic of the document with a specific technique or method mentioned in the document.
   template: |+
     ### Input:
     Document:{document}
@@ -154,6 +221,16 @@ alpaca-scifact:
     ### Response:
     Query:{query}
 
+alpaca-trec-covid:
+  mode: alpaca
+  instruction: For each document, generate a query that asks about the effects of the virus discussed in the document.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
 alpaca-touche:
   mode: alpaca
   instruction: For each document, generate a query that asks whether a certain action should be taken based on the content of the document.
@@ -164,29 +241,9 @@ alpaca-touche:
     ### Response:
     Query:{query}
 
-# Contrastive instruction templates
-co-instruction-arguana:
-  mode: co-instruction
-  index: beir-v1.0.0-arguana-flat
-  instruction: Identify the main argument in the document and use it to construct a query that reflects the opposing view.
-  template: |
-    Example {example_idx}:
-    Relevant Document: {rel_document}
-    Irrelevant Document: {irr_document}
-    Query: {query}
-
 # Chat templates
 chat-arguana:
   mode: chat
   instruction: Identify the main argument in the document and use it to construct a query that reflects the opposing view.
   template: |
     {document}
-
-# Contrastive chat templates
-co-chat-arguana:
-  mode: co-chat
-  index: beir-v1.0.0-arguana-flat
-  instruction: Identify the main argument in the document and use it to construct a query that reflects the opposing view.
-  template: |
-    Relevant Document: {rel_document}
-    Irrelevant Document: {irr_document}
