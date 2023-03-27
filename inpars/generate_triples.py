@@ -92,8 +92,8 @@ if __name__ == '__main__':
                     n_docs_not_found += 1
                     continue
 
-                pos_doc_text = corpus[pos_doc_id].strip()
-                neg_doc_text = corpus[neg_doc_id].strip()
+                pos_doc_text = corpus[str(pos_doc_id)].strip()
+                neg_doc_text = corpus[str(neg_doc_id)].strip()
 
                 writer.writerow([query, pos_doc_text, neg_doc_text])
                 n_samples_so_far += 1
