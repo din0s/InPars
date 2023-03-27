@@ -118,15 +118,12 @@ if __name__ == "__main__":
                     n_docs_not_found += 1
                     continue
 
-                if "," in neg_doc_id:
-                    neg_doc_id = f'"{neg_doc_id}"'
-
                 neg_docs.append(neg_doc_id)
 
                 if len(neg_docs) > args.n_samples:
                     break
 
-            neg_writer.writerow([q_id, ",".join(neg_docs)])
+            neg_writer.writerow([q_id] + neg_docs)
 
     if n_no_query > 0:
         print(f"{n_no_query} lines without queries.")
