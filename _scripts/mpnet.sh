@@ -1,7 +1,13 @@
 #/bin/bash
 set -eo pipefail
 
-DATASET="arguana"
+if [ -z ${1+x} ]; then
+    echo "Please specify a dataset name."
+    echo "Example: $0 arguana"
+    exit 1
+fi
+
+DATASET=$1
 
 # >>> conda initialize >>>
 # !! Contents within this block are managed by 'conda init' !!
@@ -26,6 +32,7 @@ mamba activate thesis
 STORAGE=/mnt/disks/storage
 mkdir -p $STORAGE/.cache/huggingface && export TRANSFORMERS_CACHE=$_
 mkdir -p $STORAGE/.cache/datasets && export HF_DATASETS_CACHE=$_
+mkdir -p $STORAGE/.cache/pyserini && export PYSERINI_CACHE=$_
 
 cd $HOME/InPars
 
