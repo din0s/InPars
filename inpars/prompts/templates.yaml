@@ -231,7 +231,7 @@ alpaca-trec-covid:
     ### Response:
     Query:{query}
 
-alpaca-touche:
+alpaca-webis-touche2020:
   mode: alpaca
   instruction: For each document, generate a query that asks whether a certain action should be taken based on the content of the document.
   template: |+
