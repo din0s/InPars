@@ -10,13 +10,13 @@ def read_synthetic_data(args):
     with open(args.input, 'r') as fin:
         for line in tqdm(fin):
             row = json.loads(line.strip())
-            if len(row['log_probs']) < args.min_tokens:
-                continue
-            if len(row['log_probs']) > args.max_tokens:
-                continue
-            if args.skip_questions_copied_from_context:
-                if row['question'].lower() in row['doc_text'].lower():
-                    continue
+            #if len(row['log_probs']) < args.min_tokens:
+            #    continue
+            #if len(row['log_probs']) > args.max_tokens:
+            #    continue
+            #if args.skip_questions_copied_from_context:
+            #    if row['question'].lower() in row['doc_text'].lower():
+            #        continue
             rows.append(row)
     return rows
 
@@ -68,7 +68,7 @@ if __name__ == '__main__':
             fp16=args.fp16,
             device=args.device,
             )
-        query_scores = model.rescore([(synt_item['query'], corpus[synt_item['doc_id']]) for synt_item in dataset])
+        query_scores = model.rescore([(synt_item['query'], corpus[str(synt_item['doc_id'])]) for synt_item in dataset])
         for idx, synt_item in enumerate(dataset):
             synt_item['score'] = query_scores[idx]
 
