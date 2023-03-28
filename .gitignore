@@ -173,10 +173,9 @@ poetry.toml
 # End of https://www.toptal.com/developers/gitignore/api/python
 
 wandb/
-synthetic/
-filtered/
+synthetic*/
 benc_data/
-tok_data/
+tok_data*/
 triples/
 models/
 runs/
