@@ -4,6 +4,8 @@ import hashlib
 import json
 import os
 import random
+import subprocess
+from collections import defaultdict
 
 import pandas as pd
 from pyserini.search.lucene import LuceneSearcher
@@ -25,6 +27,7 @@ if __name__ == "__main__":
     parser.add_argument("--index", type=str)
     parser.add_argument("--max_hits", type=int, default=500)
     parser.add_argument("--n_samples", type=int, default=128)
+    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--threads", type=int, default=8)
     parser.add_argument("--seed", type=int, default=1)
     args = parser.parse_args()
@@ -54,13 +57,17 @@ if __name__ == "__main__":
     else:
         searcher = LuceneSearcher.from_prebuilt_index(index)
 
+    dir = os.path.join(args.output_dir, args.dataset)
+    topics_path = os.path.join(dir, "topics.tsv")
+    os.makedirs(dir, exist_ok=True)
+
     n_no_query = 0
     n_docs_not_found = 0
     queries = {}
-    with args.input as f:
-        n_queries = sum(1 for _ in f)
-        f.seek(0)
-        for line in tqdm(f, desc="Loading synthetic queries", total=n_queries):
+    with args.input as f_in, open(topics_path, "w") as f_out:
+        n_queries = sum(1 for _ in f_in)
+        f_in.seek(0)
+        for i, line in tqdm(enumerate(f_out), desc="Loading synthetic queries", total=n_queries):
             row = json.loads(line.strip())
 
             if not row["query"]:
@@ -75,25 +82,42 @@ if __name__ == "__main__":
                 "doc_id": row["doc_id"],
             }
 
+            f_out.write(f"{i}\t{query}\n")
+
     # Convert queries to tuples (query, q_id, doc_id)
     queries = [(q["text"], q_id, q["doc_id"]) for q_id, q in queries.items()]
 
     print("Retrieving candidates...")
-    results = searcher.batch_search(
-        [q[0] for q in queries],
-        qids=list(map(str, range(len(queries)))),
-        threads=args.threads,
-        k=args.max_hits + 1,
-    )
+    run_path = os.path.join(dir, "pyserini_run.txt")
+    subprocess.run([
+        "python", "-m", "pyserini.search.lucene",
+        "--threads", str(args.threads),
+        "--batch_size", str(args.batch_size),
+        "--index", index,
+        "--topics", topics_path,
+        "--output", run_path,
+        "--bm25",
+    ])
 
-    dir = os.path.join(args.output_dir, args.dataset)
-    os.makedirs(dir, exist_ok=True)
+    results = defaultdict(list)
+    with open(run_path) as f:
+        for line in f:
+            q_idx, _, doc_id, _, _, _ = line.split()
+            results[q_idx].append(doc_id)
+
+    csv_args = {
+        "delimiter": "\t",
+        "lineterminator": "\n",
+        "quoting": csv.QUOTE_NONE,
+        "quotechar": "",
+    }
+
     out_negs = open(os.path.join(dir, "negs.tsv"), "w")
     out_qrels = open(os.path.join(dir, "qrels.tsv"), "w")
     out_qmap = open(os.path.join(dir, "queries.jsonl"), "w")
     with out_negs as f_negs, out_qrels as f_qrels, out_qmap as f_map:
-        neg_writer = csv.writer(f_negs, delimiter="\t", lineterminator="\n")
-        qrel_writer = csv.writer(f_qrels, delimiter="\t", lineterminator="\n")
+        neg_writer = csv.writer(f_negs, **csv_args)
+        qrel_writer = csv.writer(f_qrels, **csv_args)
         for q_idx in tqdm(results, desc="Sampling"):
             query, q_id, pos_doc_id = queries[int(q_idx)]
             f_map.write(json.dumps({"id": q_id, "text": query}) + "\n")
@@ -108,8 +132,7 @@ if __name__ == "__main__":
 
             neg_docs = []
             for rank in sorted(sampled_ranks):
-                hit = hits[rank]
-                neg_doc_id = hit.docid
+                neg_doc_id = hits[rank]
 
                 if pos_doc_id == neg_doc_id:
                     continue
