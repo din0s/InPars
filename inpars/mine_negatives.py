@@ -67,7 +67,7 @@ if __name__ == "__main__":
     with args.input as f_in, open(topics_path, "w") as f_out:
         n_queries = sum(1 for _ in f_in)
         f_in.seek(0)
-        for i, line in tqdm(enumerate(f_out), desc="Loading synthetic queries", total=n_queries):
+        for i, line in tqdm(enumerate(f_in), desc="Loading synthetic queries", total=n_queries):
             row = json.loads(line.strip())
 
             if not row["query"]:
@@ -92,7 +92,8 @@ if __name__ == "__main__":
     subprocess.run([
         "python", "-m", "pyserini.search.lucene",
         "--threads", str(args.threads),
-        "--batch_size", str(args.batch_size),
+        "--batch-size", str(args.batch_size),
+        "--hits", str(args.max_hits + 1),
         "--index", index,
         "--topics", topics_path,
         "--output", run_path,
