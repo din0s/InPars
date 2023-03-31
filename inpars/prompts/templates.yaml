@@ -201,6 +201,16 @@ alpaca-quora:
     ### Response:
     Query:{query}
 
+alpaca-robust04:
+  mode: alpaca
+  instruction: For each document, identify the main topic and create a query that asks a question about that topic.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
 alpaca-scidocs:
   mode: alpaca
   instruction: Generate a query by combining the main topic of the document with a specific technique or method mentioned in the document.
@@ -221,9 +231,29 @@ alpaca-scifact:
     ### Response:
     Query:{query}
 
+alpaca-signal:
+  mode: alpaca
+  instruction: Generate a query by combining the name of the person/place/thing mentioned in the document with a description of the action/event/opinion associated with it.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
 alpaca-trec-covid:
   mode: alpaca
   instruction: For each document, generate a query that asks about the effects of the virus discussed in the document.
+  template: |+
+    ### Input:
+    Document:{document}
+
+    ### Response:
+    Query:{query}
+
+alpaca-trec-news:
+  mode: alpaca
+  instruction: For each document, identify a key phrase or concept and use it to generate a query that reflects the main idea of the document.
   template: |+
     ### Input:
     Document:{document}
