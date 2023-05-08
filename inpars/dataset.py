@@ -23,6 +23,11 @@ def load_corpus(dataset_name, source='ir_datasets'):
                 )
             )
             docs_ids.append(doc.doc_id)
+    elif source == 'jsonl':
+        corpus = pd.read_json(dataset_name, lines=True)
+        corpus = corpus.rename(columns={'_id': 'doc_id'})
+        corpus = corpus[['doc_id', 'text']]
+        return corpus
     else:
         from pyserini.search.lucene import LuceneSearcher
         dataset = LuceneSearcher.from_prebuilt_index(f'beir-v1.0.0-{dataset_name}-flat')
