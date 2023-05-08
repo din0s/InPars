@@ -22,7 +22,7 @@ If you want to exclude specific queries from being filtered, you can create a ne
 **NB:** If you do perform query filtering, make sure to use the new queries file (auto-generated as `queries_filtered.jsonl` in the same directory as the original queries) in the following steps.
 
 ### Fine-tuning a bi-encoder
-To fine-tune a bi-encoder (default base model is [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpnet-base-v2)), set the variables `CORPUS_FILE`, `QUERIES_FILE` and `NEGS_FILE` in [train_be.sh](./train_be.sh) and execute it from the root directory of this repository. The trained model will be saved in a new directory named `models/mpnet` in the same directory as the provided queries.
+To fine-tune a bi-encoder (default base model is [all-mpnet-base-v2](https://huggingface.co/sentence-transformers/all-mpnet-base-v2)), set the variables `CORPUS_FILE`, `QUERIES_FILE` and `NEGS_FILE` in [train_be.sh](./train_be.sh) and execute it from the root directory of this repository. The trained model will be saved in a new directory named `models/mpnet_sbert` in the same directory as the provided queries.
 
 Behind the scenes, this extracts a qrels.tsv file from the provided queries, marking the original document as relevant, and tokenizes the corpus and queries, storing them as a HuggingFace dataset to be used with the training script.
 

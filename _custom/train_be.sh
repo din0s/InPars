@@ -42,3 +42,9 @@ python -m bi_encoder.run \
     --learning_rate 1e-5 \
     --num_train_epochs 1 \
     --dataloader_num_workers 12
+
+# Save in SBERT format
+python -m inpars_pre.sbert $OUTPUT_DIR/models/mpnet $OUTPUT_DIR/models/mpnet_sbert
+
+# Cleanup
+rm -rf $OUTPUT_DIR/models/mpnet
