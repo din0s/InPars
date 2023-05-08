@@ -64,6 +64,8 @@ if __name__ == "__main__":
     n_no_query = 0
     n_docs_not_found = 0
     queries = {}
+    q_idx2id = {}
+    idx = 0
     with args.input as f_in, open(topics_path, "w") as f_out:
         n_queries = sum(1 for _ in f_in)
         f_in.seek(0)
@@ -83,9 +85,11 @@ if __name__ == "__main__":
             }
 
             f_out.write(f"{i}\t{query}\n")
+            q_idx2id[str(idx)] = q_id
+            idx += 1
 
     # Convert queries to tuples (query, q_id, doc_id)
-    queries = [(q["text"], q_id, q["doc_id"]) for q_id, q in queries.items()]
+    #queries = [(q["text"], q_id, q["doc_id"]) for q_id, q in queries.items()]
 
     print("Retrieving candidates...")
     run_path = os.path.join(dir, "pyserini_run.txt")
@@ -120,7 +124,10 @@ if __name__ == "__main__":
         neg_writer = csv.writer(f_negs, **csv_args)
         qrel_writer = csv.writer(f_qrels, **csv_args)
         for q_idx in tqdm(results, desc="Sampling"):
-            query, q_id, pos_doc_id = queries[int(q_idx)]
+            q_id = q_idx2id[q_idx]
+            q = queries[q_id]
+            query = q["text"]
+            pos_doc_id = q["doc_id"]
             f_map.write(json.dumps({"id": q_id, "text": query}) + "\n")
             qrel_writer.writerow([q_id, pos_doc_id])
 
