@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+
 os.environ["BITSANDBYTES_NOWELCOME"] = "1"
 
 import pandas as pd
@@ -93,11 +94,11 @@ if __name__ == "__main__":
         generate_kwargs['no_repeat_ngram_size'] = args.no_repeat_ngram_size
         generate_kwargs['do_sample'] = args.do_sample
 
-    for example in generator.generate_queries(
-        documents=dataset['text'],
-        doc_ids=dataset['doc_id'],
-        batch_size=args.batch_size,
-        **generate_kwargs,
-    ):
-        with open(args.output, 'a') as f:
+    with open(args.output, 'a') as f:
+        for example in generator.generate_queries(
+            documents=dataset['text'],
+            doc_ids=dataset['doc_id'],
+            batch_size=args.batch_size,
+            **generate_kwargs,
+        ):
             f.write(json.dumps(example) + '\n')
