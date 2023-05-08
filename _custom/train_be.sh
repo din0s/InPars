@@ -41,7 +41,8 @@ python -m bi_encoder.run \
     --sample_neg_from_topk 200 \
     --learning_rate 1e-5 \
     --num_train_epochs 1 \
-    --dataloader_num_workers 12
+    --dataloader_num_workers 12 \
+    --sentence_pooling_method mean
 
 # Save in SBERT format
 python -m inpars_pre.sbert $OUTPUT_DIR/models/mpnet $OUTPUT_DIR/models/mpnet_sbert
