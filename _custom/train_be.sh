@@ -7,10 +7,10 @@ NEGS_FILE=".tsv"
 OUTPUT_DIR=$(dirname $QUERIES_FILE)
 
 # Extract qrels.tsv from queries.jsonl
-python -m inpars_pre.qrels $QUERIES_FILE $OUTPUT_DIR/qrels.tsv
+python -m inpars_aux.qrels $QUERIES_FILE $OUTPUT_DIR/qrels.tsv
 
 # Convert queries to tokenization format
-python -m inpars_pre.queries $QUERIES_FILE $OUTPUT_DIR/queries_tok.jsonl
+python -m inpars_aux.queries $QUERIES_FILE $OUTPUT_DIR/queries_tok.jsonl
 
 # Tokenize data for bi-encoder
 mkdir -p $OUTPUT_DIR/tok_data
@@ -45,7 +45,7 @@ python -m bi_encoder.run \
     --sentence_pooling_method mean
 
 # Save in SBERT format
-python -m inpars_pre.sbert $OUTPUT_DIR/models/mpnet $OUTPUT_DIR/models/mpnet_sbert
+python -m inpars_aux.sbert $OUTPUT_DIR/models/mpnet $OUTPUT_DIR/models/mpnet_sbert
 
 # Cleanup
 rm -rf $OUTPUT_DIR/models/mpnet

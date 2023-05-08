@@ -7,7 +7,7 @@ NEGS_FILE=".tsv"
 OUTPUT_DIR=$(dirname $QUERIES_FILE)
 
 # Convert hard_negatives.tsv to triples.tsv
-python -m inpars_pre.triples \
+python -m inpars_aux.triples \
     --input $NEGS_FILE \
     --output $OUTPUT_DIR/triples.tsv \
     --corpus $CORPUS_FILE \
