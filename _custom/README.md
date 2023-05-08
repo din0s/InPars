@@ -10,7 +10,7 @@ We assume that the following files are available:
   - `query` (str): the generated query text
   - `doc_id` (str): the identifier of the document it was generated from
   - `doc_text` (str): the text of the document it was generated from
-- **hard_negatives.jsonl**
+- **hard_negatives.tsv**
   - Format: `query_id \t pos_doc_id \t neg_doc_id1 \t neg_doc_id2 ...`
   - `query_id` and `doc_id` correspond to entries from the previous files
 
