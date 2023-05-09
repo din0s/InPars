@@ -64,4 +64,4 @@ if __name__ == "__main__":
 
             mrrs.append(mrr)
 
-    print(f"MRR: {np.mean(mrrs)}")
+    print(f"MRR@{args.top_k}: {np.mean(mrrs)}")

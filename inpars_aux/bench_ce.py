@@ -1,4 +1,4 @@
-"""Benchmarks a trained biencoder on the training qrel file."""
+"""Benchmarks a trained crossencoder on the training queries."""
 import argparse
 import os
 import subprocess
