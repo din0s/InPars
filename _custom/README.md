@@ -27,6 +27,6 @@ To fine-tune a bi-encoder (default base model is [all-mpnet-base-v2](https://hug
 Behind the scenes, this extracts a qrels.tsv file from the provided queries, marking the original document as relevant, and tokenizes the corpus and queries, storing them as a HuggingFace dataset to be used with the training script.
 
 ### Fine-tuning a cross-encoder
-To fine-tune a cross-encoder (default base model is [monot5-3b-msmarco-10k](https://huggingface.co/castorini/monot5-3b-msmarco-10k)), set the variables `CORPUS_FILE`, `QUERIES_FILE` and `NEGS_FILE` in [train_ce.sh](./train_ce.sh) and execute it from the root directory of this repository. The trained model will be saved in a new directory named `models/monot5` in the same directory as the provided queries.
+To fine-tune a cross-encoder (default base model is [ms-marco-MiniLM-L-6-v2](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L-6-v2)), set the variables `CORPUS_FILE`, `QUERIES_FILE` and `NEGS_FILE` in [train_ce.sh](./train_ce.sh) and execute it from the root directory of this repository. The trained model will be saved in a new directory named `models/miniLM` in the same directory as the provided queries.
 
 Behind the scenes, this converts the hard negatives to a triples.tsv file which contains a (query, positive document, negative document) pair in each line, to be used with the training script.

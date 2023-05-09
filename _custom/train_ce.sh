@@ -15,12 +15,11 @@ python -m inpars_aux.triples \
 
 # Train cross-encoder
 mkdir -p $OUTPUT_DIR/models
-python -m inpars.train \
+python -m inpars.train_minilm \
     --triples $OUTPUT_DIR/triples.tsv \
-    --base_model castorini/monot5-3b-msmarco-10k \
-    --output_dir $OUTPUT_DIR/models/monot5 \
-    --per_device_train_batch_size 2 \
-    --gradient_accumulation_steps 64 \
+    --base_model cross-encoder/ms-marco-MiniLM-L-6-v2 \
+    --output_dir $OUTPUT_DIR/models/miniLM \
+    --per_device_train_batch_size 128 \
     --learning_rate 3e-6 \
     --weight_decay 5e-5 \
     --warmup_steps 156 \
