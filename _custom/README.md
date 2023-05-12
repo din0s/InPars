@@ -30,3 +30,6 @@ Behind the scenes, this extracts a qrels.tsv file from the provided queries, mar
 To fine-tune a cross-encoder (default base model is [ms-marco-MiniLM-L-6-v2](https://huggingface.co/cross-encoder/ms-marco-MiniLM-L-6-v2)), set the variables `CORPUS_FILE`, `QUERIES_FILE` and `NEGS_FILE` in [train_ce.sh](./train_ce.sh) and execute it from the root directory of this repository. The trained model will be saved in a new directory named `models/miniLM` in the same directory as the provided queries.
 
 Behind the scenes, this converts the hard negatives to a triples.tsv file which contains a (query, positive document, negative document) pair in each line, to be used with the training script.
+
+### Benchmarking a bi-encoder
+We can benchmark a bi-encoder model _on the training queries_, as a sanity check that the model is learning something useful. To do so, set the variables `MODEL_PATH`, `CORPUS_FILE`, `QUERIES_FILE` and `QRELS_FILE` in [benchmark_be.sh](./benchmark_be.sh) and execute it from the root directory of this repository. This is useful when comparing the baseline model (by setting the `MODEL_PATH` accordingly) to the fine-tuned one. Note that this evaluation does not necessarily reflect the improvement in retrieval performance on the true user queries.
