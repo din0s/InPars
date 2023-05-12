@@ -1,8 +1,9 @@
 #!/bin/bash
 
-CORPUS_FILE=".jsonl"
-QUERIES_FILE=".jsonl"
-NEGS_FILE=".tsv"
+# Change these!
+CORPUS_FILE=".../corpus.jsonl"
+QUERIES_FILE=".../queries.jsonl"
+NEGS_FILE=".../negs.tsv"
 
 OUTPUT_DIR=$(dirname $QUERIES_FILE)
 
@@ -26,3 +27,7 @@ python -m inpars.train_minilm \
     --max_steps 624 \
     --optim adamw_torch \
     --bf16
+
+# Save in SBERT format & cleanup
+python -c "from sentence_transformers import CrossEncoder; CrossEncoder('$OUTPUT_DIR/models/miniLM-strat').save('$OUTPUT_DIR/models/miniLM_sbert')"
+rm -rf $OUTPUT_DIR/models/miniLM

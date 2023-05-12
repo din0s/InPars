@@ -1,8 +1,9 @@
 #!/bin/bash
 
-CORPUS_FILE=".jsonl"
-QUERIES_FILE=".jsonl"
-NEGS_FILE=".tsv"
+# Change these!
+CORPUS_FILE=".../corpus.jsonl"
+QUERIES_FILE=".../queries.jsonl"
+NEGS_FILE=".../negs.tsv"
 
 OUTPUT_DIR=$(dirname $QUERIES_FILE)
 
@@ -42,7 +43,8 @@ python -m bi_encoder.run \
     --learning_rate 1e-5 \
     --num_train_epochs 1 \
     --dataloader_num_workers 12 \
-    --sentence_pooling_method mean
+    --sentence_pooling_method mean \
+    --optim adamw_torch
 
 # Save in SBERT format
 python -m inpars_aux.sbert $OUTPUT_DIR/models/mpnet $OUTPUT_DIR/models/mpnet_sbert
