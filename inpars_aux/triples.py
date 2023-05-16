@@ -42,4 +42,4 @@ if __name__ == "__main__":
             neg_ids = line[1:]
             for neg_id in neg_ids:
                 neg_text = fix_text(corpus.loc[neg_id]["text"])
-                writer.writerow([q_text, pos_text, neg_text])
+                writer.writerow([q_id, q_text, pos_text, neg_text])
