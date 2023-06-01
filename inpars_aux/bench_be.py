@@ -16,6 +16,7 @@ if __name__ == "__main__":
     parser.add_argument("--qrels", type=argparse.FileType("r"), required=True)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--top_k", type=int, default=10)
+    parser.add_argument("--add_prefixes", action="store_true")
     args = parser.parse_args()
 
     model = SentenceTransformer(args.model_path)
@@ -31,6 +32,8 @@ if __name__ == "__main__":
     corpus = pd.read_json(args.corpus, lines=True)
     for i in tqdm(range(0, len(corpus), args.batch_size), desc="Embedding corpus"):
         batch = corpus[i : i + args.batch_size]
+        if args.add_prefixes:
+            batch["text"] = "passage: " + batch["text"]
         batch_embeddings = model.encode(batch["text"].tolist(), convert_to_tensor=True)
         corpus_embeddings.extend(batch_embeddings)
         corpus_ids.extend(batch["_id"].tolist())
@@ -41,6 +44,8 @@ if __name__ == "__main__":
     queries = pd.read_json(args.queries, lines=True)
     for i in tqdm(range(0, len(queries), args.batch_size), desc="Embedding queries"):
         batch = queries[i : i + args.batch_size]
+        if args.add_prefixes:
+            batch["query"] = "query: " + batch["query"]
         batch_embeddings = model.encode(batch["query"].tolist(), convert_to_tensor=True)
         query_embeddings.extend(batch_embeddings)
 

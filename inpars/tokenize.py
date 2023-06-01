@@ -18,16 +18,18 @@ def get_args():
     parser.add_argument("--max_seq_length", type=int, default=512)
     parser.add_argument("--threads", type=int, default=8)
     parser.add_argument("--use_title", action="store_true")
+    parser.add_argument("--add_prefixes", action="store_true")
     return parser.parse_args()
 
 
-def to_tokens(examples):
+def to_tokens(examples, prefix=None):
+    prefix = "" if prefix is None else prefix + " "
     if "title" in examples and args.use_title:
         content = []
         for title, text in zip(examples["title"], examples["text"]):
-            content.append(title + tokenizer.sep_token + text)
+            content.append(prefix + title + tokenizer.sep_token + text)
     else:
-        content = examples["text"]
+        content = prefix + examples["text"]
     return tokenize_fn(content)
 
 
@@ -48,9 +50,16 @@ if __name__ == "__main__":
     Path(corpus_path).mkdir(parents=True, exist_ok=True)
     Path(queries_path).mkdir(parents=True, exist_ok=True)
 
+    if args.add_prefixes:
+        to_tokens_q = partial(to_tokens, prefix="query: ")
+        to_tokens_p = partial(to_tokens, prefix="passage: ")
+    else:
+        to_tokens_q = to_tokens
+        to_tokens_p = to_tokens
+
     corpus = load_dataset("json", data_files=args.corpus, split="train")
     corpus = corpus.map(
-        to_tokens,
+        to_tokens_p,
         num_proc=args.threads,
         remove_columns=["title", "text", "metadata"],
         batched=True,
@@ -63,7 +72,7 @@ if __name__ == "__main__":
 
     queries = load_dataset("json", data_files=args.queries, split="train")
     queries = queries.map(
-        to_tokens,
+        to_tokens_q,
         num_proc=args.threads,
         remove_columns=["text"],
         batched=True,
