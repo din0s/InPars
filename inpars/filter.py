@@ -1,9 +1,12 @@
-import json
 import argparse
+import json
+
 import numpy as np
 from tqdm import tqdm
-from .rerank import Reranker
+
 from .dataset import load_corpus
+from .rerank import Reranker
+
 
 def read_synthetic_data(args):
     rows = []
@@ -29,7 +32,8 @@ if __name__ == '__main__':
                         help="Dataset name from BEIR collection.")
     parser.add_argument('--dataset_source', default='ir_datasets',
                         help="The dataset source: ir_datasets or pyserini")
-    parser.add_argument("--filter_strategy", type=str, required=True,
+    parser.add_argument("--filter_strategy", type=str, default='reranker',
+                        choices=['scores', 'reranker'],
                         help="Filtering strategy: scores or reranker.")
     parser.add_argument('--keep_top_k', type=int, default=10_000,
                         help='Write only top_k best scored query-doc pairs.')
@@ -74,6 +78,8 @@ if __name__ == '__main__':
 
     dataset.sort(key=lambda dataset: dataset['score'], reverse=True)
     with open(args.output, 'w') as fout:
-        for row in dataset[:args.keep_top_k]:
+        if args.keep_top_k > 0:
+            dataset = dataset[:args.keep_top_k]
+        for row in dataset:
             fout.write(json.dumps(row) + '\n')
     print("Done!")
