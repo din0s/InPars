@@ -1,19 +1,13 @@
-import os
-import csv
-import torch
 import argparse
-import pandas as pd
 from collections import OrderedDict
-from math import ceil, exp
+from math import ceil
 from typing import List
+
+import pandas as pd
+import torch
 from tqdm.auto import tqdm
-from transformers import (
-    AutoConfig,
-    AutoTokenizer,
-    AutoModelForSequenceClassification,
-    AutoModelForSeq2SeqLM,
-    T5ForConditionalGeneration
-)
+from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
 from . import utils
 from .dataset import load_corpus, load_queries
 
@@ -157,13 +151,19 @@ if __name__ == "__main__":
                         help="The chunk index of the queries to rerank in this process.")
     args = parser.parse_args()
 
-    if args.dataset:
-        corpus = load_corpus(args.dataset, source=args.dataset_source)
-        queries = load_queries(args.dataset, source=args.dataset_source)
-    else:
-        corpus = pd.read_csv(args.corpus)
+    assert args.dataset or (args.corpus and args.queries), \
+            "You need to provide either a dataset name or a corpus and a queries file."
+
+    if args.queries:
         queries = pd.read_csv(args.queries)
         queries = dict(zip(queries['query_id'], queries['text']))
+    else:
+        queries = load_queries(args.dataset, source=args.dataset_source)
+
+    if args.corpus:
+        corpus = pd.read_csv(args.corpus)
+    else:
+        corpus = load_corpus(args.dataset, source=args.dataset_source)
 
     if args.chunk_queries > 1:
         queries = split_dict_into_chunks(queries, args.chunk_queries, args.chunk_idx)
@@ -181,7 +181,6 @@ if __name__ == "__main__":
         fp16=args.fp16,
         bf16=args.bf16,
         device=args.device,
-        # torchscript=args.torchscript,
     )
 
     run = utils.TRECRun(input_run)
