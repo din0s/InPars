@@ -29,7 +29,7 @@ def to_tokens(examples, prefix=None):
         for title, text in zip(examples["title"], examples["text"]):
             content.append(prefix + title + tokenizer.sep_token + text)
     else:
-        content = prefix + examples["text"]
+        content = [prefix + e for e in examples["text"]]
     return tokenize_fn(content)
 
 
