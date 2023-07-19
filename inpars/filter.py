@@ -10,17 +10,23 @@ from .rerank import Reranker
 
 def read_synthetic_data(args):
     rows = []
-    with open(args.input, 'r') as fin:
-        for line in tqdm(fin):
-            row = json.loads(line.strip())
-            #if len(row['log_probs']) < args.min_tokens:
-            #    continue
-            #if len(row['log_probs']) > args.max_tokens:
-            #    continue
-            #if args.skip_questions_copied_from_context:
-            #    if row['question'].lower() in row['doc_text'].lower():
-            #        continue
-            rows.append(row)
+    skip = 0
+    with open(args.input, 'r', errors='ignore') as fin:
+        for line in tqdm(fin, desc='Reading synthetic data'):
+            try:
+                row = json.loads(line.strip())
+                #if len(row['log_probs']) < args.min_tokens:
+                #    continue
+                #if len(row['log_probs']) > args.max_tokens:
+                #    continue
+                #if args.skip_questions_copied_from_context:
+                #    if row['question'].lower() in row['doc_text'].lower():
+                #        continue
+                rows.append(row)
+            except:
+                skip += 1
+                continue
+    print(f'Skipped {skip} lines due to JSON errors.')
     return rows
 
 
